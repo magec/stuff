@@ -1,8 +1,8 @@
-gtk-theme-name = "MurrinaEalm"
+# Auto-written by gtk2_prefs. Do not edit.
+
+gtk-theme-name = "MurrinaOransun"
 style "user-font"
 {
 	font_name="Arial 10"
 }
 widget_class "*" style "user-font"
-gtk-font-name="Arial 10"
-gtk-icon-theme-name = "Rodent"
