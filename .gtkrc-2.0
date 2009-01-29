@@ -1,0 +1,8 @@
+gtk-theme-name = "MurrinaEalm"
+style "user-font"
+{
+	font_name="Arial 10"
+}
+widget_class "*" style "user-font"
+gtk-font-name="Arial 10"
+gtk-icon-theme-name = "Rodent"

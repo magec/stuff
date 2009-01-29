@@ -1,0 +1,65 @@
+!	.Xdefaults
+!	Misc	{{{
+Xcursor*theme:	Vanilla-DMZ
+Xcursor*size:	22
+!	}}}
+!	urxvt: Color & Appaerance	{{{
+urxvt*fading:			30
+urxvt*transparent:		true
+!urxvt*background:		rgba:0000/0000/0000/DDDD
+!urxvt*depth:			32
+urxvt*depth:			24	
+urxvt*shading:			15
+!urxvt*tintColor:		blue	
+urxvt*background:		blue
+urxvt*cursorColor:		#FFA500
+urxvt*cursorColor2:		pink
+urxvt*foreground:		white
+urxvt*pointerColor:		#919191
+! 	}}} 
+!	urxvt: Geometry & Fonts	{{{
+urxvt*geometry:			80x25
+urxvt*font:				xft:Terminus:pixelsize=16:antialias=true:hinting=true
+urxvt*boldFont:			xft:Terminus:pixelsize=16:antialias=true:bold:hinting=true
+urxvt*italicFont:		xft:Terminus:pixelsize=16:antialias=true:italic:autohint=true:hinting=true
+urxvt*bolditalicFont:	xft:Terminus:pixelsize=16:antialias=true:bold:italic:autohint=true:hinting=true
+!	}}} 
+!	urxvt: Border & Scrollbar	{{{
+urxvt*borderless:		true	
+urxvt*saveLines:		65535
+urxvt*scrollstyle:		plain
+urxvt*scrollBar:		false
+urxvt*scrollBar_right:	true
+urxvt*secondaryScroll:	true
+!	}}}
+!	urxvt: Misc & Matcher	{{{
+urxvt*termName:				rxvt
+urxvt*imLocale:				en_EN.UTF-8
+urxvt*loginShell:			true
+urxvt*cutchars:				"()*,<>[]{}|'
+urxvt*perl-lib:				/usr/lib/urxvt/perl/
+urxvt*perl-ext-common:		default,matcher
+urxvt*urlLauncher:			firefox
+urxvt*matcher.button:		1
+urxvt*matcher.pattern.1:	\bwww\.[\w-]+\.[\w./?&@#-]*[\w/-]
+urxvt*visualBell:			false	
+!	}}}
+!	urxvt: Tango Colors	{{{
+urxvt*color0:	#2E3436
+urxvt*color1:	#CC0000
+urxvt*color2:	#4E9A06
+urxvt*color3:	#C4A000
+urxvt*color4:	#3465A4
+urxvt*color5:	#75507B
+urxvt*color6:	#06989A
+urxvt*color7:	#D3D7CF
+urxvt*color8:	#555753
+urxvt*color9:	#EF2929
+urxvt*color10:	#8AE234
+urxvt*color11:	#FCE94F
+urxvt*color12:	#729FCF
+urxvt*color13:	#AD7FA8
+urxvt*color14:	#34E2E2
+urxvt*color15:	#EEEEEC
+!	}}}
+!	vim: set fdm=marker tabstop=4 shiftwidth=4 nu:
