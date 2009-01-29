@@ -1,4 +1,5 @@
 "http://www.vim.org/htmldoc/options.html
+"http://rayninfo.co.uk/vimtips.html
 set nocompatible "Usa config por defecto de vim
 syntax on "Muchos colores
 set paste "No indentar codigo 'pasteado'
@@ -14,7 +15,7 @@ set foldmethod=marker "folding manual
 "Espacios redundantes y Tabs
 highlight RedundantSpaces ctermbg=blue guibg=blue
 match RedundantSpaces /\s\+$\| \+\ze\t\|\t/
-" Set up the status line
+"Set up the status line
 fun! <SID>SetStatusLine()
     let l:s1="%-3.3n\\ %f\\ %h%m%r%w"
     let l:s2="[%{strlen(&filetype)?&filetype:'?'},%{&encoding},%{&fileformat}]"
@@ -23,3 +24,5 @@ fun! <SID>SetStatusLine()
 endfun
 set laststatus=2 "Always show this status line
 call <SID>SetStatusLine()
+"Volver a 'tabear' al leer buffer, puede ser destructivo.
+"autocmd BufRead * retab
