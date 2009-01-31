@@ -1,7 +1,7 @@
 gtk-theme-name = "MurrinaOransun"
 style "user-font"
 {
-    font_name="Arial 10"
+    font_name="Arial 8"
 }
 widget_class "*" style "user-font"
 gtk-icon-theme-name = "Rodent"

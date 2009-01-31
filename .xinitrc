@@ -4,7 +4,7 @@ xrdb -merge $HOME/.Xresources &
 #xcompmgr -C &
 setxkbmap es&
 urxvtd -o -q -f &
-exec awesome
+parcellite &
+if [ -f /usb/bin/wicd-client ] ; then wicd-client& ; fi
 
-#parcellite &
-#exec xterm
+exec awesome
