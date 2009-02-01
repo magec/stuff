@@ -28,8 +28,8 @@ channel = "Master"
 adapter = "BAT0"
 -- Wallpaper
 imgpath = awful.util.getdir("config")..'/imgs/'
-setrndwall = "awsetbg -c -r "..awful.util.getdir("config").."/walls"
-setwall = "awsetbg -c "..awful.util.getdir("config").."/walls/vladstudio_microbes_1920x1200.png"
+setrndwall = "awsetbg -t -r "..awful.util.getdir("config").."/walls"
+setwall = "awsetbg -c "..awful.util.getdir("config").."/walls/vladstudio_microbes_1920x1200.jpg"
 awful.util.spawn(setrndwall)
 -- }}}
 -- {{{ Widgets
@@ -64,7 +64,7 @@ function batteryInfo()
             if tonumber(battery) < 10 then
                 naughty.notify({ title      = "Battery Warning"
                                , text       = "Battery low!"..battery.."% left!"
-                               , timeout    = 15
+                               , timeout    = 10
                                , position   = "top_right"
                                , fg         = beautiful.fg_focus
                                , bg         = beautiful.bg_focus
@@ -116,15 +116,40 @@ mpdwidget = widget({ type = 'textbox'
         })
 wicked.register(mpdwidget, wicked.widgets.mpd, '"$1"')
 mpdwidget:buttons({
+    button({ }, 1, function ()
+        awful.util.spawn('mpc play')
+    end),
+    button({ }, 2, function ()
+        awful.util.spawn('mpc stop')
+    end),
+    button({ }, 3, function ()
+        awful.util.spawn('mpc pause')
+    end),
     button({ }, 4, function()
         awful.util.spawn('mpc prev')
         wicked.widgets.mpd()
+        mpdwidget.mouse_enter()
     end),
     button({ }, 5, function()
         awful.util.spawn('mpc next')
         wicked.widgets.mpd()
+        mpdwidget.mouse_enter()
     end),
 })
+mpdwidget.mouse_enter = function()
+    naughty.destroy(pop)
+    local text = awful.util.pread("mpc; echo ; mpc stats")
+    pop = naughty.notify({  title      = "MPC Stats\n"
+                      , text       = awful.util.escape(text)
+                      , icon       = imgpath..'mpd.png'
+                      , icon_size  = 28
+                      , timeout    = 0
+                      , width      = 400
+                      , position   = "bottom_left"
+                      , bg         = beautiful.bg_focus
+                      })
+end
+mpdwidget.mouse_leave = function() naughty.destroy(pop) end
 -- }}}
 -- {{{ Memory (text)
 --
@@ -138,7 +163,21 @@ memwidget = widget({
     align = 'right'
 })
 wicked.register(memwidget, wicked.widgets.mem, '$2Mb($1%)')
--- }}}
+memwidget.mouse_enter = function()
+    naughty.destroy(pop)
+    local text = awful.util.pread("free")
+    pop = naughty.notify({  title  = "Free\n"
+                      , text       = awful.util.escape(text)
+                      , icon       = imgpath..'mem.png'
+                      , icon_size  = 32
+                      , timeout    = 0
+                      , width      = 700
+                      , position   = "bottom_right"
+                      , bg         = beautiful.bg_focus
+                      })
+end
+memwidget.mouse_leave = function() naughty.destroy(pop) end
+--- }}}
 -- {{{ Swap (text)
 --
 swp_ico = widget({ type = "imagebox", align = "right" })
@@ -151,7 +190,20 @@ swpwidget = widget({
     align = 'right'
 })
 wicked.register(swpwidget, wicked.widgets.swap, '$2Mb($1%)')
--- }}}
+swpwidget.mouse_enter = function()
+    naughty.destroy(pop)
+    local text = awful.util.pread("cat /proc/meminfo")
+    pop = naughty.notify({  title  = "/proc/meminfo\n"
+                      , text       = awful.util.escape(text)
+                      , icon       = imgpath..'swp.png'
+                      , icon_size  = 32
+                      , timeout    = 0
+                      , position   = "bottom_right"
+                      , bg         = beautiful.bg_focus
+                      })
+end
+swpwidget.mouse_leave = function() naughty.destroy(pop) end
+--- }}}
 -- {{{ Mem (bar)
 --
 membarwidget = widget({ type = 'progressbar'
@@ -205,6 +257,21 @@ cpugraphwidget:plot_properties_set('cpu', { fg = '#00FF00'
                                         , vertical_gradient = true
                                         })
 wicked.register(cpugraphwidget, wicked.widgets.cpu, '$1', 1, 'cpu')
+cpuwidget.mouse_enter = function()
+    naughty.destroy(pop)
+    local text = awful.util.pread("ps afo pid,tty,stat,time,pcpu,pmem,comm")
+    pop = naughty.notify({  title      = "Processes\n"
+                      , text       = awful.util.escape(text)
+                      , icon       = imgpath..'cpu.png'
+                      , icon_size  = 28
+                      , timeout    = 0
+                      , width      = 600
+                      , position   = "bottom_right"
+                      , bg         = beautiful.bg_focus
+                      })
+end
+cpuwidget.mouse_leave = function() naughty.destroy(pop) end
+
 -- }}}
 -- {{{ FileSystem (text)
 --
@@ -219,7 +286,21 @@ fswidget = widget({
 })
 wicked.register(fswidget, wicked.widgets.fs, '<span color="white">/:</span>${/ usep}%<span color="white">/OPT:</span>${/opt usep}%', 10)
 wicked.widgets.fs()
--- }}}
+fswidget.mouse_enter = function()
+    naughty.destroy(pop)
+    local text = awful.util.pread("df -ha")
+    pop = naughty.notify({  title  = "Disk Usage\n"
+                      , text       = awful.util.escape(text)
+                      , icon       = imgpath..'fs.png'
+                      , icon_size  = 32
+                      , timeout    = 0
+                      , width      = 550
+                      , position   = "bottom_right"
+                      , bg         = beautiful.bg_focus
+                      })
+end
+fswidget.mouse_leave = function() naughty.destroy(pop) end
+--- }}}
 -- {{{ Net (text)
 --
 net_ico = widget({ type = "imagebox", align = "right" })
@@ -233,6 +314,20 @@ netwidget = widget({
 })
 wicked.register(netwidget, wicked.widgets.net, '${eth0 down}', 5, nil, 3)
 -- <span color="white">[</span>${eth0 rx} rx<span color="white">/</span>${eth0 tx} tx<span color="white">]</span>', 5, nil, 3)
+netwidget.mouse_enter = function()
+    naughty.destroy(pop)
+    local listen = awful.util.pread("netstat -patun | awk '/ESTABLISHED/{ if ($4 !~ /127.0.0.1|localhost/) print  \"(\"$7\")\t\"$5}'")
+    pop = naughty.notify({  title      = "Established\n"
+                      , text       = awful.util.escape(listen)
+                      , icon       = imgpath..'net-wired.png'
+                      , icon_size  = 32
+                      , timeout    = 0
+                      , position   = "bottom_right"
+                      , width      = 350
+                      , bg         = beautiful.bg_focus
+                      })
+end
+netwidget.mouse_leave = function() naughty.destroy(pop) end
 -- }}}
 -- {{{ Load (text)
 --
@@ -252,6 +347,20 @@ wicked.register(loadwidget, 'function', function (widget, args)
   local pos = n:find(' ', n:find(' ', n:find(' ')+1)+1)
   return  n:sub(1,pos-1)
 end, 2)
+loadwidget.mouse_enter = function()
+    naughty.destroy(pop)
+    local text = awful.util.pread("uptime; echo; who")
+    pop = naughty.notify({  title  = "Uptime\n"
+                      , text       = awful.util.escape(text)
+                      , icon       = imgpath..'load.png'
+                      , icon_size  = 32
+                      , timeout    = 0
+                      , width      = 600
+                      , position   = "bottom_right"
+                      , bg         = beautiful.bg_focus
+                      })
+end
+loadwidget.mouse_leave = function() naughty.destroy(pop) end
 -- }}}
 -- {{{ Volume (Custom) requiere alsa-utils
 --
@@ -336,7 +445,6 @@ end
 -- }}}
 --  {{{ Mis Hotkeys
 my_keys = {}
-table.insert(my_keys, key({ modkey, "Control" }, "r", awesome.restart))
 table.insert(my_keys, key({ modkey, "Control" }, "w", function () awful.util.spawn(setrndwall) end))
 table.insert(my_keys, key({ modkey, "Control" }, "q", function () awful.util.spawn(setwall) end))
 table.insert(my_keys, key({ modkey, "Control" }, "t", function () awful.util.spawn('thunar') end))
@@ -356,3 +464,7 @@ table.insert(my_keys, key({ modkey, "Control" }, "-", function () awful.util.spa
 table.insert(my_keys, key({ modkey }, "Up", function () awful.client.focus.byidx(1); if client.focus then client.focus:raise() end end))
 table.insert(my_keys, key({ modkey }, "Down", function () awful.client.focus.byidx(-1);  if client.focus then client.focus:raise() end end))
 -- }}}
+--- Revelation {{{
+require("revelation")
+table.insert(my_keys, key({ modkey, "Control" }, "x", revelation.revelation))
+--- }}}
