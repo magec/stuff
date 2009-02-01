@@ -365,6 +365,19 @@ loadwidget.mouse_leave = function() naughty.destroy(pop) end
 --
 line = awful.util.pread("amixer -c 0 | head -1")
 channel = string.match(line, ".+'(%w+)'.+")
+function getVol()
+    local status = io.popen("amixer -c 0 -- sget ".. channel):read("*all")
+    local volume = string.match(status, "(%d?%d?%d)%%")
+    volume = string.format("%3d", volume)
+    status = string.match(status, "%[(o[^%]]*)%]")
+    if status and string.find(status, "on", 1, true) then
+        volume = volume.."%"
+    else
+        volume = volume.."M"
+    end
+        volumewidget.text = volume
+        return volume
+end
 if channel then
     vol_ico = widget({ type = "imagebox", align = "left" })
     vol_ico.image = image(imgpath..'vol.png')
@@ -374,19 +387,6 @@ if channel then
                 , name = 'volumewidget'
                 , align = 'left'
                 })
-    function getVol()
-      local status = io.popen("amixer -c 0 -- sget ".. channel):read("*all")
-      local volume = string.match(status, "(%d?%d?%d)%%")
-      volume = string.format("%3d", volume)
-      status = string.match(status, "%[(o[^%]]*)%]")
-      if string.find(status, "on", 1, true) then
-        volume = volume.."%"
-      else
-        volume = volume.."M"
-      end
-        volumewidget.text = volume
-        return volume
-    end
     wicked.register(volumewidget, getVol, "$1", 5)
     volumewidget:buttons({
         button({ }, 4, function()
