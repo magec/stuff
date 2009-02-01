@@ -283,7 +283,16 @@ fswidget = widget({
     name = 'fswidget',
     align = 'right'
 })
-wicked.register(fswidget, wicked.widgets.fs, '<span color="white">/:</span>${/ usep}%<span color="white">/OPT:</span>${/opt usep}%', 10)
+fs_args = '<span color="white">/:</span>${/ usep}%'
+line = awful.util.pread("grep -i home /etc/fstab | head -1")
+if string.match(line, 'home') then
+    fs_args = fs_args..'<span color="white">~:</span>${/home usep}%'
+end
+line = awful.util.pread("grep -i /opt /etc/fstab | head -1")
+if string.match(line, 'opt') then
+    fs_args = fs_args..'<span color="white">/OPT:</span>${/opt usep}%'
+end
+wicked.register(fswidget, wicked.widgets.fs, fs_args, 10)
 wicked.widgets.fs()
 fswidget.mouse_enter = function()
     naughty.destroy(pop)
