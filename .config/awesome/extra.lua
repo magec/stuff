@@ -58,7 +58,7 @@ function batteryInfo()
     elseif sta:match("Discharging") then
         dir = "-"
             if tonumber(battery) < 10 then
-                naughty.notify({ title      = "Battery Warning"
+                naughty.notify({ title      = '<span color="white">Battery Warning</span>\n'
                                , text       = "Battery low!"..battery.."% left!"
                                , timeout    = 10
                                , position   = "top_right"
@@ -135,7 +135,7 @@ mpdwidget:buttons({
 mpdwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = awful.util.pread("mpc; echo ; mpc stats")
-    pop = naughty.notify({  title      = "MPC Stats\n"
+    pop = naughty.notify({  title      = '<span color="white">MPC Stats</span>\n'
                       , text       = awful.util.escape(text)
                       , icon       = imgpath..'mpd.png'
                       , icon_size  = 28
@@ -162,7 +162,7 @@ wicked.register(memwidget, wicked.widgets.mem, '$2Mb($1%)')
 memwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = awful.util.pread("free")
-    pop = naughty.notify({  title  = "Free\n"
+    pop = naughty.notify({  title  = '<span color="white">Free</span>\n'
                       , text       = awful.util.escape(text)
                       , icon       = imgpath..'mem.png'
                       , icon_size  = 32
@@ -191,7 +191,7 @@ if string.match(line, 'swap') then
     swpwidget.mouse_enter = function()
         naughty.destroy(pop)
         local text = awful.util.pread("cat /proc/meminfo")
-        pop = naughty.notify({  title  = "/proc/meminfo\n"
+        pop = naughty.notify({  title  = '<span color="white">/proc/meminfo</span>\n'
                           , text       = awful.util.escape(text)
                           , icon       = imgpath..'swp.png'
                           , icon_size  = 32
@@ -259,7 +259,7 @@ wicked.register(cpugraphwidget, wicked.widgets.cpu, '$1', 1, 'cpu')
 cpuwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = awful.util.pread("ps afo pid,tty,stat,time,pcpu,pmem,comm")
-    pop = naughty.notify({  title      = "Processes\n"
+    pop = naughty.notify({  title      = '<span color="white">Processes</span>\n'
                       , text       = awful.util.escape(text)
                       , icon       = imgpath..'cpu.png'
                       , icon_size  = 28
@@ -297,7 +297,7 @@ wicked.widgets.fs()
 fswidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = awful.util.pread("df -ha")
-    pop = naughty.notify({  title  = "Disk Usage\n"
+    pop = naughty.notify({  title  = '<span color="white">Disk Usage</span>\n'
                       , text       = awful.util.escape(text)
                       , icon       = imgpath..'fs.png'
                       , icon_size  = 32
@@ -325,7 +325,7 @@ wicked.register(netwidget, wicked.widgets.net, '${eth0 down}', 5, nil, 3)
 netwidget.mouse_enter = function()
     naughty.destroy(pop)
     local listen = awful.util.pread("netstat -patun | awk '/ESTABLISHED/{ if ($4 !~ /127.0.0.1|localhost/) print  \"(\"$7\")\t\"$5}'")
-    pop = naughty.notify({  title      = "Established\n"
+    pop = naughty.notify({  title      = '<span color="white">Established</span>\n'
                       , text       = awful.util.escape(listen)
                       , icon       = imgpath..'net-wired.png'
                       , icon_size  = 32
@@ -358,7 +358,7 @@ end, 2)
 loadwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = awful.util.pread("uptime; echo; who")
-    pop = naughty.notify({  title  = "Uptime\n"
+    pop = naughty.notify({  title  = '<span color="white">Uptime</span>\n'
                       , text       = awful.util.escape(text)
                       , icon       = imgpath..'load.png'
                       , icon_size  = 32
