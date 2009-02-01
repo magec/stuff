@@ -5,6 +5,6 @@ xrdb -merge $HOME/.Xresources &
 setxkbmap es&
 urxvtd -o -q -f &
 parcellite &
-if [ -f /usb/bin/wicd-client ] ; then wicd-client& ; fi
-
+wicd-client &
+#
 exec awesome

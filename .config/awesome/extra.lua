@@ -21,11 +21,6 @@ beautiful.border_marked = '#8B0000'
 -- usamos muchos widgets genericos de wicked
 require("wicked")
 modkey = "Mod4"
--- Volumen
-cardid = 0
-channel = "Master"
--- Bateria
-adapter = "BAT0"
 -- Wallpaper
 imgpath = awful.util.getdir("config")..'/imgs/'
 setrndwall = "awsetbg -t -r "..awful.util.getdir("config").."/walls"
@@ -43,6 +38,7 @@ batterywidget = widget({type = "textbox"
                         , align = "right"
                         })
 function batteryInfo()
+    local adapter = "BAT0"
     local fcur = io.open("/sys/class/power_supply/"..adapter.."/charge_now")
     if not fcur then
         return "A/C"
@@ -180,29 +176,32 @@ memwidget.mouse_leave = function() naughty.destroy(pop) end
 --- }}}
 -- {{{ Swap (text)
 --
-swp_ico = widget({ type = "imagebox", align = "right" })
-swp_ico.image = image(imgpath..'swp.png')
---swp_ico.resize = false
-swp_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
-swpwidget = widget({
-    type = 'textbox',
-    name = 'swpwidget',
-    align = 'right'
-})
-wicked.register(swpwidget, wicked.widgets.swap, '$2Mb($1%)')
-swpwidget.mouse_enter = function()
-    naughty.destroy(pop)
-    local text = awful.util.pread("cat /proc/meminfo")
-    pop = naughty.notify({  title  = "/proc/meminfo\n"
-                      , text       = awful.util.escape(text)
-                      , icon       = imgpath..'swp.png'
-                      , icon_size  = 32
-                      , timeout    = 0
-                      , position   = "bottom_right"
-                      , bg         = beautiful.bg_focus
-                      })
+line = awful.util.pread("grep -i swap /etc/fstab | head -1")
+if string.match(line, 'swap') then
+    swp_ico = widget({ type = "imagebox", align = "right" })
+    swp_ico.image = image(imgpath..'swp.png')
+    --swp_ico.resize = false
+    swp_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
+    swpwidget = widget({
+        type = 'textbox',
+        name = 'swpwidget',
+        align = 'right'
+    })
+    wicked.register(swpwidget, wicked.widgets.swap, '$2Mb($1%)')
+    swpwidget.mouse_enter = function()
+        naughty.destroy(pop)
+        local text = awful.util.pread("cat /proc/meminfo")
+        pop = naughty.notify({  title  = "/proc/meminfo\n"
+                          , text       = awful.util.escape(text)
+                          , icon       = imgpath..'swp.png'
+                          , icon_size  = 32
+                          , timeout    = 0
+                          , position   = "bottom_right"
+                          , bg         = beautiful.bg_focus
+                          })
+    end
+    swpwidget.mouse_leave = function() naughty.destroy(pop) end
 end
-swpwidget.mouse_leave = function() naughty.destroy(pop) end
 --- }}}
 -- {{{ Mem (bar)
 --
@@ -364,39 +363,42 @@ loadwidget.mouse_leave = function() naughty.destroy(pop) end
 -- }}}
 -- {{{ Volume (Custom) requiere alsa-utils
 --
-vol_ico = widget({ type = "imagebox", align = "left" })
-vol_ico.image = image(imgpath..'vol.png')
---vol_ico.resize = false
-vol_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e alsamixer') end)})
-volumewidget = widget({ type = 'textbox'
-            , name = 'volumewidget'
-            , align = 'left'
-            })
-function getVol()
-  local status = io.popen("amixer -c "..cardid.." -- sget ".. channel):read("*all")
-  local volume = string.match(status, "(%d?%d?%d)%%")
-  volume = string.format("%3d", volume)
-  status = string.match(status, "%[(o[^%]]*)%]")
-  if string.find(status, "on", 1, true) then
-    volume = volume.."%"
-  else
-    volume = volume.."M"
-  end
-    volumewidget.text = volume
-    return volume
+line = awful.util.pread("amixer -c 0 | head -1")
+channel = string.match(line, ".+'(%w+)'.+")
+if channel then
+    vol_ico = widget({ type = "imagebox", align = "left" })
+    vol_ico.image = image(imgpath..'vol.png')
+    --vol_ico.resize = false
+    vol_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e alsamixer') end)})
+    volumewidget = widget({ type = 'textbox'
+                , name = 'volumewidget'
+                , align = 'left'
+                })
+    function getVol()
+      local status = io.popen("amixer -c 0 -- sget ".. channel):read("*all")
+      local volume = string.match(status, "(%d?%d?%d)%%")
+      volume = string.format("%3d", volume)
+      status = string.match(status, "%[(o[^%]]*)%]")
+      if string.find(status, "on", 1, true) then
+        volume = volume.."%"
+      else
+        volume = volume.."M"
+      end
+        volumewidget.text = volume
+        return volume
+    end
+    wicked.register(volumewidget, getVol, "$1", 5)
+    volumewidget:buttons({
+        button({ }, 4, function()
+             awful.util.spawn('amixer -c 0 set '..channel..' 3dB+');
+             getVol()
+        end),
+        button({ }, 5, function()
+             awful.util.spawn('amixer -c 0 set '..channel..' 3dB-');
+             getVol()
+        end),
+    })
 end
-wicked.register(volumewidget, getVol, "$1", 5)
-volumewidget:buttons({
-    button({ }, 4, function()
-         awful.util.spawn('amixer -c 0 set '..channel..' 3dB+');
-         getVol()
-    end),
-    button({ }, 5, function()
-         awful.util.spawn('amixer -c 0 set '..channel..' 3dB-');
-         getVol()
-    end),
-})
-
 -- }}}
 -- Cierre de Widgets}}}
 -- {{{ Wibox
