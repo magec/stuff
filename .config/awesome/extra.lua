@@ -3,19 +3,22 @@
 -- loadfile(awful.util.getdir("config").."/extra.lua")()
 -- ###############################################################################
 -- {{{ Tema
-awesome.font = "Terminus 8"
+awesome.font = "Terminus 10"
 beautiful.font = "Terminus 10"
---beautiful.font = "DejaVu Sans Condensed 10"
+--beautiful.bg_normal     = '#222222AA'
+--beautiful.bg_focus      = '#3465a4AA'
+--beautiful.border_width  = 2
+--beautiful.border_normal = '#555555'
 beautiful.bg_normal     = '#000000AA'
 beautiful.bg_focus      = '#2F4F4FAA'
 beautiful.bg_urgent     = '#8B0000'
 beautiful.fg_normal     = '#F5DEB3'
 beautiful.fg_focus      = '#FFA500'
 beautiful.fg_urgent     = '#FFFF00'
-beautiful.border_width  = '2'
-beautiful.border_normal = '#2F4F4F'
-beautiful.border_focus  = '#FFA500'
-beautiful.border_marked = '#8B0000'
+beautiful.border_width  = 1
+beautiful.border_normal = '#2F4F4F66'
+beautiful.border_focus  = '#FFA50066'
+beautiful.border_marked = '#8B000066'
 -- }}}
 -- {{{ Inicializacion
 -- usamos muchos widgets genericos de wicked
@@ -419,7 +422,7 @@ for s = 1, screen.count() do
                 , fg = beautiful.fg_normal
                 , bg = beautiful.bg_normal
                 , border_color = beautiful.border_normal
-                , height = 14
+                , height = 16
                 , border_width = 1
                 })
     -- Le enchufo los widgets
