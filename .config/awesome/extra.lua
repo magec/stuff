@@ -3,8 +3,9 @@
 -- loadfile(awful.util.getdir("config").."/extra.lua")()
 -- ###############################################################################
 -- {{{ Tema
-awesome.font = "Terminus 10"
-beautiful.font = "Terminus 10"
+awesome.font = "smoothansi 9"
+beautiful.font = "smoothansi 9"
+--
 --beautiful.bg_normal     = '#222222AA'
 --beautiful.bg_focus      = '#3465a4AA'
 --beautiful.border_width  = 2
@@ -28,7 +29,6 @@ modkey = "Mod4"
 imgpath = awful.util.getdir("config")..'/imgs/'
 setrndwall = "awsetbg -t -r "..awful.util.getdir("config").."/walls"
 setwall = "awsetbg -c "..awful.util.getdir("config").."/walls/vladstudio_microbes_1920x1200.jpg"
-awful.util.spawn(setrndwall)
 -- }}}
 -- {{{ Widgets
 -- {{{ Bateria (texto)
@@ -469,6 +469,8 @@ table.insert(my_keys, key({ modkey, "Control" }, "g", function () awful.util.spa
 table.insert(my_keys, key({ modkey, "Control" }, "a", function () awful.util.spawn('ruc_web_resolucio.sh') end))
 table.insert(my_keys, key({ modkey, "Control" }, "s", function () awful.util.spawn('slock') end))
 table.insert(my_keys, key({ modkey, "Control" }, "v", function () awful.util.spawn('urxvtc -e ncmpcpp') end))
+table.insert(my_keys, key({ modkey, "Control" }, "0", function () awful.util.spawn('xrandr -o left') end))
+table.insert(my_keys, key({ modkey, "Control" }, "'", function () awful.util.spawn('xrandr -o normal') end))
 table.insert(my_keys, key({ modkey, "Control" }, "b", function () awful.util.spawn('mpc play') end))
 table.insert(my_keys, key({ modkey, "Control" }, "n", function () awful.util.spawn('mpc pause') end))
 table.insert(my_keys, key({ modkey, "Control" }, "m", function () awful.util.spawn('mpc prev'); wicked.widgets.mpd() end))
