@@ -1,15 +1,13 @@
 #!/usr/bin/perl -w
 # http://search.cpan.org/src/HARDAKER/SNMP-5.0401/t/bulkwalk.t
 
-#print "Content-Type: text/html\n\n";
-
 use strict;
 use SNMP;
-use Data::Dumper; #Para depurar
+use Data::Dumper; 
 use Term::ANSIColor qw(:constants);
 $Term::ANSIColor::AUTORESET = 1;
 
-my %oids =(
+my %oids=(
     ifNumber                        =>  '.1.3.6.1.2.1.2.1.0',
     vmMembershipEntry               =>  '.1.3.6.1.4.1.9.9.68.1.2.2.1.2',    #CISCO
     vtpVlanName                     =>  '.1.3.6.1.4.1.9.9.46.1.3.1.1.4.1',  #CISCO
@@ -31,9 +29,27 @@ my %oids =(
     sysInfo                         =>  '.1.3.6.1.2.1.1'
 );
 
+my %sysDescr=(
+    '.1.3.6.1.2.1.1.1'      =>  'sysDescr',
+    '.1.3.6.1.2.1.1.2'      =>  'sysObjectID',
+    '.1.3.6.1.2.1.1.3'      =>  'sysUpTime',
+    '.1.3.6.1.2.1.1.4'      =>  'sysContact',
+    '.1.3.6.1.2.1.1.5'      =>  'sysName',
+    '.1.3.6.1.2.1.1.6'      =>  'sysLocation',
+    '.1.3.6.1.2.1.1.7'      =>  'sysServices',
+    '.1.3.6.1.2.1.1.8'      =>  'sysORLastChange',
+    '.1.3.6.1.2.1.1.9'      =>  'sysORTable',
+    '.1.3.6.1.2.1.1.9.1'    =>  'sysOREntry',
+    '.1.3.6.1.2.1.1.9.1.1'  =>  'sysORIndex',
+    '.1.3.6.1.2.1.1.9.1.2'  =>  'sysORID',
+    '.1.3.6.1.2.1.1.9.1.3'  =>  'sysORDescr',
+    '.1.3.6.1.2.1.1.9.1.4'  =>  'sysORUpTime'
+);
+
 my $table = '<TABLE style="font-size:9px; text-align: center; border-style:solid; border-width:1px;" border="0" cellspacing="3" SIZE=6>';
 my %sinfo=();
 my %vlans=();
+my %hash=();
 
 sub SnmpSession() {
     my ($machine, $community) = @_;
@@ -78,7 +94,6 @@ sub bulk() {
     return @result;
 }
 
-
 sub parse() {
     my @result = @_;
 
@@ -120,7 +135,6 @@ sub parse() {
         };
     }
 
-
     for my $x ($result[9]){
         for my $y (@$x){
                 push ( @{ $vlans{@$y[2]}{'pvid'} }, $ifaces{@$y[1]}{'name'} ) if @$y[1];
@@ -159,12 +173,11 @@ sub parse() {
             }
         }
     }
-
     return %ifaces;
 }
 
 sub on_off {
-    return "On" if  $_[0] == 1 or return "Off";
+    return "On" if $_[0] == 1 or return "Off";
 }
 
 sub convert_bytes ($$){
@@ -208,7 +221,7 @@ sub AgrArr() { #Agrupa los puertos de un array de un chui
     return @out;
 }
 
-sub getValues {
+sub getPOSTvalues {
     my %tmphash=();
     read(STDIN, my $buffer, $ENV{'CONTENT_LENGTH'});
     my @pairs = split(/&/, $buffer);
@@ -220,8 +233,6 @@ sub getValues {
     }
     return %tmphash;
 }
-
-my %hash=();
 
 sub enterasys() {
     %hash = &parse( &bulk ( $ARGV[0], 'uocpublic',
@@ -286,7 +297,7 @@ sub info() {
     print "<B>Info:</B><BR>\n";
     print "$table<TR bgcolor=#AAAAAA><TD>Index</TD><TD>Name</TD></TR>";
     foreach my $key (sort keys %sinfo) {
-        print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>$key</TD>".&td($sinfo{$key})."</TR>\n";
+        print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>$sysDescr{$key}</TD>".&td($sinfo{$key})."</TR>\n";
     }
     print "</TABLE>\n";
 }
@@ -298,15 +309,26 @@ sub dbg() {
 }
 
 sub totals() {
-    my (@adminports,@operports)=();
+    my (@adminon,@adminoff,@operon,@operoff,@gbports,@fastports,@ethports)=();
     print "<B>Ports:</B><BR/>";
     print "$table<TR bgcolor=#AAAAAA>".&td('Range').&td('Ports').&td('Total')."</TR>";
     foreach my $key (keys %hash) {
-        push (@adminports, $hash{$key}{'name'}) if $hash{$key}{'admin'} eq "Off";
-        push (@operports, $hash{$key}{'name'}) if $hash{$key}{'oper'} eq "Off";
+        next unless $hash{$key}{'name'};
+        push (@adminon, $hash{$key}{'name'})    if $hash{$key}{'admin'} eq "On";
+        push (@adminoff, $hash{$key}{'name'})   if $hash{$key}{'admin'} eq "Off";
+        push (@operon, $hash{$key}{'name'})     if $hash{$key}{'oper'}  eq "On";
+        push (@operoff, $hash{$key}{'name'})    if $hash{$key}{'oper'}  eq "Off";
+        push (@gbports, $hash{$key}{'name'})    if $hash{$key}{'speed'} eq "1000";
+        push (@fastports, $hash{$key}{'name'})  if $hash{$key}{'speed'} eq "100";
+        push (@ethports, $hash{$key}{'name'})   if $hash{$key}{'speed'} eq "10";
     }
-    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>Admin Off</TD>".&td(join (", ", &AgrArr(@adminports))).&td(($#adminports+1))."</TR>\n";
-    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>Oper Off</TD>".&td(join (", ", &AgrArr(@operports))).&td(($#operports+1))."</TR>\n";
+    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>Admin On</TD>".&td(join (", ", &AgrArr(@adminon))).&td(($#adminon+1))."</TR>\n";
+    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>Admin Off</TD>".&td(join (", ", &AgrArr(@adminoff))).&td(($#adminoff+1))."</TR>\n";
+    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>Oper On</TD>".&td(join (", ", &AgrArr(@operon))).&td(($#operon+1))."</TR>\n";
+    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>Oper Off</TD>".&td(join (", ", &AgrArr(@operoff))).&td(($#operoff+1))."</TR>\n";
+    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>Gb Link</TD>".&td(join (", ", &AgrArr(@gbports))).&td(($#gbports+1))."</TR>\n";
+    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>Fast Link</TD>".&td(join (", ", &AgrArr(@fastports))).&td(($#fastports+1))."</TR>\n";
+    print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>10 Mb Link</TD>".&td(join (", ", &AgrArr(@ethports))).&td(($#ethports+1))."</TR>\n";
     print "</TABLE>\n";
 }
 
@@ -338,36 +360,40 @@ sub ports() {
 }
 
 sub td() {
-    return "<TD>@_</TD>" if $_[0] or return "<TD bgcolor=#B9B974><I>Vacío</I></TD>";
+    return "<TD>@_</TD>" if $_[0] or return "<TD bgcolor=#D1D175><I>Vacío</I></TD>";
 }
-
 
 sub end() {
-#    foreach my $key (keys %ENV) {
-#        print "$key -> $ENV{$key}<br>\n";
-#    }
     print "</BODY></HTML>";
+    exit 0;
 }
 
-
-my %FORM=&getValues;
+my %FORM=&getPOSTvalues;
 &header;
-if ($FORM{'input'}) {
+if ($FORM{'input'} =~ /^[\w-]+(?:|(\.[\w-]+)+)$/ ) {
     $ARGV[0] = $FORM{'input'};
+    print "<B>$FORM{'input'}</B><BR><BR>";
     my $sysObjectID = &get($FORM{'input'},'uocpublic','.1.3.6.1.2.1.1.2.0');
     if ($sysObjectID =~ /\.1\.3\.6\.1\.4\.1\.5624/) {
         &enterasys;
     } elsif ($sysObjectID =~ /\.1\.3\.6\.1\.4\.1\.9/) {
         &cisco;
+    } elsif ($sysObjectID) {
+        print "<B>'$sysObjectID' No está soportado.</B>";
+        &end;
+        die;
     } else {
-        print "<B>($FORM{'input'}) '$sysObjectID' No está soportado.</B>";
+        print "<B>No hubo respuesta.</B>";
+        &end;
         die;
     }
     &info;
     &totals;
     &vlans;
     &ports;
+} elsif ($FORM{'input'}) {
+    print "<B>($FORM{'input'}) No es una entrada válida.</B>";
 }
 &end;
 
-exit 0;
+exit 1;
