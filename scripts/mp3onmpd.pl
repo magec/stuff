@@ -143,7 +143,7 @@ sub find() {
 	local(*DB, $/);
 	open (DB, "/var/lib/mpd/mpd.db") or die BOLD RED "No puedo abir mpd.db";
 	my $slurp = <DB>;
-	while ($slurp =~ /file: ([^\n]*game[^\n]*)\nTime: $time/isg) {
+	while ($slurp =~ /file: ([^\n]*game[^\n]*)\nTime: $time\n/isg) {
 		print "$1\n";	
 	}
 }
