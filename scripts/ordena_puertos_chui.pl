@@ -2,8 +2,9 @@
 # Funciones para ordenar y agrupar un listado de puertos de un switch u otros.
  
 use strict;
+#use warnings;
  
-my @ports = qw/ fe.2.10 fe.2.1 lag0 fe.1.1 fe.1.3 fe.1.4 fe.1.5 fe.1.6 fe.1.7 fe.1.8 fe.1.9 fe.1.10 fe.1.11 fe.2.1 fe.2.2 fe.2.9 ge.1.1 ge.1.2 ge.1.3 ge.1.10 /;
+my @ports = qw/ fe.2.10 fe.2.1 lag0 fe.1.1 fe.1.3 fe.1.4 fe.1.5 fe.1.6 fe.1.7 fe.1.8 fe.1.9 fe.1.10 fe.1.11 fe.2.1 fe.2.2 fe.2.9 ge.1.1 ge.1.2 host ge.1.3 ge.1.10 rtr.0.1 fe.2.19 fe.2.20 fe.2.18 fe.2.19 fe.2.21/;
  
 sub TrueSort() { # http://www.perlmonks.org/?node_id=483462
 	my @list = @_;
@@ -18,17 +19,14 @@ sub TrueSort() { # http://www.perlmonks.org/?node_id=483462
 	];
 }
  
-sub RDigits() { #Devuelve los digitos a la derecha del string
-	return $& if "@_[0]" =~ /\d+$/g;
-}
- 
 sub AgrArr() { #Agrupa los puertos de un array de un chui
 	my @out=();
 	my $cache=undef;
 	my @array=&TrueSort(@_);
 	for my $i (0..$#array) {
 		next if $array[$i] eq $array[$i+1]; #Nos cargamos los duplicados 
-		if ( (&RDigits($array[$i])+1) != &RDigits($array[$i+1]) ) {
+        my $next = $1.($2+1) if $array[$i] =~ /^(.+?)(\d+)$/;
+        if ( $next ne $array[$i+1] ) {
 			push (@out, $cache.$array[$i]);
 			undef($cache);
 		} elsif ( ! defined($cache) ) {
