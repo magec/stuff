@@ -71,7 +71,9 @@ sub get() {
     my ($machine, $community, $oid) = @_;
     my $session = &SnmpSession($machine, $community);
     if ( $session->{ErrorNum} ) {
-        print "<$@> Error ".$session->{ErrorNum}." \"".$session->{ErrorStr}."\n en ".$session->{ErrorInd}."\n";
+        print "Error ".$session->{ErrorNum}." \"".$session->{ErrorStr}."\n en ".$session->{ErrorInd}."\n";
+        &end;
+        exit 1;
     }
     return $session->get($oid);
 }
@@ -88,7 +90,9 @@ sub bulk() {
     my @result = $session->bulkwalk( 0, $ifnum, $VarList );
 
     if ( $session->{ErrorNum} ) {
-        print "<$@> Error ".$session->{ErrorNum}." \"".$session->{ErrorStr}."\n en ".$session->{ErrorInd}."\n";
+        print "Error ".$session->{ErrorNum}." \"".$session->{ErrorStr}."\n en ".$session->{ErrorInd}."\n";
+        &end;
+        exit 1;
     }
 
     return @result;
@@ -201,21 +205,18 @@ sub TrueSort() { # http://www.perlmonks.org/?node_id=483462
     ];
 }
 
-sub RDigits() { #Devuelve los digitos a la derecha del string
-    return $& if "$_[0]" =~ /\d+$/g;
-}
-
 sub AgrArr() { #Agrupa los puertos de un array de un chui
     my @out=();
     my $cache=undef;
     my @array=&TrueSort(@_);
     for my $i (0..$#array) {
         next if $array[$i] eq $array[$i+1]; #Nos cargamos los duplicados 
-        if ( (&RDigits($array[$i])+1) != &RDigits($array[$i+1]) ) {
+        my $next = $1.($2+1) if $array[$i] =~ /(.+?)(\d+)$/g;
+        if ( $next ne $array[$i+1] ) {
             push (@out, $cache.$array[$i]);
             undef($cache);
         } elsif ( ! defined($cache) ) {
-            $cache = "$array[$i]-";
+            $cache = "$array[$i]~";
         }
     }
     return @out;
@@ -310,7 +311,7 @@ sub dbg() {
 
 sub totals() {
     my (@adminon,@adminoff,@operon,@operoff,@gbports,@fastports,@ethports)=();
-    print "<B>Ports:</B><BR/>";
+    print '<B>Ports:</B><BR/>';
     print "$table<TR bgcolor=#AAAAAA>".&td('Range').&td('Ports').&td('Total')."</TR>";
     foreach my $key (keys %hash) {
         next unless $hash{$key}{'name'};
@@ -333,7 +334,7 @@ sub totals() {
 }
 
 sub vlans() {
-    print "<B>Vlans:</B><BR/>";
+    print "<B>Vlans:</B><BR/>\n";
     print "$table<TR bgcolor=#AAAAAA><TD>Nombre</TD><TD>Pvid</TD><TD>Tipo</TD><TD>Puertos</TD><TD>Total</TD></TR>";
     foreach my $key (sort { $a <=> $b } keys %vlans) {
         next unless $key;
@@ -346,10 +347,11 @@ sub vlans() {
 }
 
 sub ports() {
-    print '<B>Ports:</B><BR/>';
+    print "<B>Ports:</B><BR/>\n";
     print "$table<TR bgcolor=#AAAAAA><TD>Index</TD><TD>Name</TD><TD>Alias</TD><TD>Speed</TD><TD>Admin</TD><TD>Oper</TD><TD>In</TD><TD>Out</TD><TD>Pvid</TD><TD>Egress</TD><TD>Untagged</TD><TD>Vlan Name</TD><TD>Description</TD></TR>";
     foreach my $key (sort { $a <=> $b } keys %hash) {
-        next if not $hash{$key}{'index'} or $hash{$key}{'pvid'} < 1;
+#        next if not $hash{$key}{'index'} or $hash{$key}{'pvid'} < 1;
+        next if not $hash{$key}{'index'};
         my $bgc = '#DDDDDD';
         $bgc = '#B3D98C' if $hash{$key}{'oper'} eq "Off";
         $bgc = '#8CB3D9' if $hash{$key}{'admin'} eq "Off";
