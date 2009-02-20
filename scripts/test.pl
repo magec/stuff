@@ -3,7 +3,7 @@
 
 use strict;
 use SNMP;
-use Data::Dumper; 
+use Data::Dumper;
 use Term::ANSIColor qw(:constants);
 $Term::ANSIColor::AUTORESET = 1;
 
@@ -21,12 +21,16 @@ my %oids=(
     ifSpeed                         =>  '.1.3.6.1.2.1.2.2.1.5',
     ifAdminStatus                   =>  '.1.3.6.1.2.1.2.2.1.7',
     ifOperStatus                    =>  '.1.3.6.1.2.1.2.2.1.8',
+    ifLastChange                    =>  '.1.3.6.1.2.1.2.2.1.9',
     ifInOctets                      =>  '.1.3.6.1.2.1.2.2.1.10',
     ifOutOctets                     =>  '.1.3.6.1.2.1.2.2.1.16',
     dot1qVlanStaticEgressPorts      =>  '.1.3.6.1.2.1.17.7.1.4.3.1.2',
     dot1qVlanForbiddenEgressPorts   =>  '.1.3.6.1.2.1.17.7.1.4.3.1.3',
     dot1qVlanStaticUntaggedPorts    =>  '.1.3.6.1.2.1.17.7.1.4.3.1.4',
-    sysInfo                         =>  '.1.3.6.1.2.1.1'
+    sysInfo                         =>  '.1.3.6.1.2.1.1',
+    ipAdEntAddr                     =>  '.1.3.6.1.2.1.4.20.1.1',
+    ipAdEntIfIndex                  =>  '.1.3.6.1.2.1.4.20.1.2',
+    ipAdEntNetMask                  =>  '.1.3.6.1.2.1.4.20.1.3'
 );
 
 my %sysDescr=(
@@ -50,19 +54,19 @@ my $table = '<TABLE style="font-size:9px; text-align: center; border-style:solid
 my %sinfo=();
 my %vlans=();
 my %hash=();
+my %route=();
 
 sub SnmpSession() {
     my ($machine, $community) = @_;
 
     $machine   = 'localhost' unless $machine;
-    $community = 'public'    unless $community;
+    $community = 'uocpublic' unless $community;
 
     my $session = new SNMP::Session(
         DestHost    => $machine,
         Community   => $community,
         Version     => 2,
-        RemotePort  => 161,
-        UseNumeric  => 1,
+        UseNumeric  => 1
     );
     return $session;
 }
@@ -115,6 +119,7 @@ sub parse() {
 
    for my $x ($result[12]){
         for my $y (@$x){
+#            print "@$y[0] @$y[1] @$y[2] @$y[3]<bR>\n";
             $sinfo{@$y[0]} = @$y[2];
         }
     }
@@ -131,6 +136,7 @@ sub parse() {
             oper        => &on_off($result[6][$_][2]),
             in          => &convert_bytes($result[7][$_][2], 3),
             out         => &convert_bytes($result[8][$_][2], 3),
+            last        => $result[16][$_][2],
             pvid        => $result[9][$_][2],
             vlanport    => $result[10][$_][2],
             vlaname     => $vlans{$result[9][$_][2]}{'name'},
@@ -192,6 +198,10 @@ sub convert_bytes ($$){
      }
 }
 
+sub timeticks2HR() {
+    my $seconds = ($_[0]/100);
+    return sprintf ("%.1d Days, %.2d:%.2d:%.2d", $seconds/86400, $seconds/3600%24, $seconds/60%60, $seconds%60) if $seconds or return 0; 
+}
 sub TrueSort() { # http://www.perlmonks.org/?node_id=483462
     my @list = @_;
     return @list[
@@ -252,7 +262,12 @@ sub enterasys() {
                                 $oids{'sysInfo'},
                                 $oids{'dot1qVlanStaticEgressPorts'},
                                 $oids{'dot1qVlanForbiddenEgressPorts'},
-                                $oids{'dot1qVlanStaticUntaggedPorts'}
+                                $oids{'dot1qVlanStaticUntaggedPorts'},
+                                $oids{'ifLastChange'},
+                                $oids{'ipAdEntAddr'},
+                                $oids{'ipAdEntIfIndex'},
+                                $oids{'ipAdEntNetMask'}
+
     )   );
 }
 
@@ -273,7 +288,11 @@ sub cisco() {
                                 $oids{'sysInfo'},
                                 $oids{'dot1qVlanStaticEgressPorts'},
                                 $oids{'dot1qVlanForbiddenEgressPorts'},
-                                $oids{'dot1qVlanStaticUntaggedPorts'}
+                                $oids{'dot1qVlanStaticUntaggedPorts'},
+                                $oids{'ifLastChange'},
+                                $oids{'ipAdEntAddr'},
+                                $oids{'ipAdEntIfIndex'},
+                                $oids{'ipAdEntNetMask'}
     )   );
 }
 sub header() {
@@ -298,7 +317,11 @@ sub info() {
     print "<B>Info:</B><BR>\n";
     print "$table<TR bgcolor=#AAAAAA><TD>Index</TD><TD>Name</TD></TR>";
     foreach my $key (sort keys %sinfo) {
-        print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>$sysDescr{$key}</TD>".&td($sinfo{$key})."</TR>\n";
+        if ($key eq ".1.3.6.1.2.1.1.3") {
+            print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>$sysDescr{$key}</TD>".&td("(".$sinfo{$key}.") ".&timeticks2HR($sinfo{$key}))."</TR>\n";
+        } else {
+            print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>$sysDescr{$key}</TD>".&td($sinfo{$key})."</TR>\n";
+        }
     }
     print "</TABLE>\n";
 }
@@ -311,7 +334,7 @@ sub dbg() {
 
 sub totals() {
     my (@adminon,@adminoff,@operon,@operoff,@gbports,@fastports,@ethports)=();
-    print '<B>Ports:</B><BR/>';
+    print '<B>Totals:</B><BR/>';
     print "$table<TR bgcolor=#AAAAAA>".&td('Range').&td('Ports').&td('Total')."</TR>";
     foreach my $key (keys %hash) {
         next unless $hash{$key}{'name'};
@@ -348,7 +371,7 @@ sub vlans() {
 
 sub ports() {
     print "<B>Ports:</B><BR/>\n";
-    print "$table<TR bgcolor=#AAAAAA><TD>Index</TD><TD>Name</TD><TD>Alias</TD><TD>Speed</TD><TD>Admin</TD><TD>Oper</TD><TD>In</TD><TD>Out</TD><TD>Pvid</TD><TD>Egress</TD><TD>Untagged</TD><TD>Vlan Name</TD><TD>Description</TD></TR>";
+    print "$table<TR bgcolor=#AAAAAA><TD>Index</TD><TD>Name</TD><TD>Alias</TD><TD>Speed</TD><TD>Admin</TD><TD>Oper</TD><TD>In</TD><TD>Out</TD><TD>Pvid</TD><TD>Egress</TD><TD>Untagged</TD><TD>Vlan Name</TD><TD>Last Change</TD><TD>Description</TD></TR>";
     foreach my $key (sort { $a <=> $b } keys %hash) {
 #        next if not $hash{$key}{'index'} or $hash{$key}{'pvid'} < 1;
         next if not $hash{$key}{'index'};
@@ -356,7 +379,7 @@ sub ports() {
         $bgc = '#B3D98C' if $hash{$key}{'oper'} eq "Off";
         $bgc = '#8CB3D9' if $hash{$key}{'admin'} eq "Off";
         $bgc = '#D9B38C' if $hash{$key}{'admin'} eq "Off" and $hash{$key}{'oper'} eq "Off";
-    print "\t<TR bgcolor=$bgc><TD bgcolor=#AAAAAA>$hash{$key}{'index'}</TD>".&td($hash{$key}{'name'}).&td($hash{$key}{'alias'}).&td($hash{$key}{'speed'}).&td($hash{$key}{'admin'}).&td($hash{$key}{'oper'}).&td($hash{$key}{'in'}).&td($hash{$key}{'out'}).&td($hash{$key}{'pvid'}).&td(@{$hash{$key}{'egress'}}).&td(@{$hash{$key}{'untagged'}}).&td($hash{$key}{'vlaname'}).&td($hash{$key}{'descr'})."</TR>\n";
+    print "\t<TR bgcolor=$bgc><TD bgcolor=#AAAAAA>$hash{$key}{'index'}</TD>".&td($hash{$key}{'name'}).&td($hash{$key}{'alias'}).&td($hash{$key}{'speed'}).&td($hash{$key}{'admin'}).&td($hash{$key}{'oper'}).&td($hash{$key}{'in'}).&td($hash{$key}{'out'}).&td($hash{$key}{'pvid'}).&td(@{$hash{$key}{'egress'}}).&td(@{$hash{$key}{'untagged'}}).&td($hash{$key}{'vlaname'}).&td(&timeticks2HR($sinfo{'.1.3.6.1.2.1.1.3'}-$hash{$key}{'last'})).&td($hash{$key}{'descr'})."</TR>\n";
     }
     print "</TABLE>\n";
 }
@@ -374,7 +397,7 @@ my %FORM=&getPOSTvalues;
 &header;
 if ($FORM{'input'} =~ /^[\w-]+(?:|(\.[\w-]+)+)$/ ) {
     $ARGV[0] = $FORM{'input'};
-    print "<B>$FORM{'input'}</B><BR><BR>";
+    print "<H2>$FORM{'input'}</H2>";
     my $sysObjectID = &get($FORM{'input'},'uocpublic','.1.3.6.1.2.1.1.2.0');
     if ($sysObjectID =~ /\.1\.3\.6\.1\.4\.1\.5624/) {
         &enterasys;
@@ -383,11 +406,9 @@ if ($FORM{'input'} =~ /^[\w-]+(?:|(\.[\w-]+)+)$/ ) {
     } elsif ($sysObjectID) {
         print "<B>'$sysObjectID' No está soportado.</B>";
         &end;
-        die;
     } else {
         print "<B>No hubo respuesta.</B>";
         &end;
-        die;
     }
     &info;
     &totals;
@@ -396,6 +417,5 @@ if ($FORM{'input'} =~ /^[\w-]+(?:|(\.[\w-]+)+)$/ ) {
 } elsif ($FORM{'input'}) {
     print "<B>($FORM{'input'}) No es una entrada válida.</B>";
 }
-&end;
 
 exit 1;
