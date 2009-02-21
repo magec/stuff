@@ -34,7 +34,7 @@ setwall = "awsetbg -c "..awful.util.getdir("config").."/walls/vladstudio_microbe
 -- {{{ Bateria (texto)
 bat_ico = widget({ type = "imagebox", align = "right" })
 bat_ico.image = image(imgpath..'bat.png')
---bat_ico.resize = false
+bat_ico.resize = false
 bat_ico:buttons({button({ }, 1, function () awful.util.spawn('xterm') end)})
 batterywidget = widget({type = "textbox"
                         , name = "batterywidget"
@@ -107,7 +107,7 @@ Lseparator.resize = false
 --
 mpd_ico = widget({ type = "imagebox", align = "left" })
 mpd_ico.image = image(imgpath..'mpd.png')
---mpd_ico.resize = false
+mpd_ico.resize = false
 mpd_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e ncmpcpp') end)})
 mpdwidget = widget({ type = 'textbox'
             ,name   = 'mpdwidget'
@@ -154,7 +154,7 @@ mpdwidget.mouse_leave = function() naughty.destroy(pop) end
 --
 mem_ico = widget({ type = "imagebox", align = "right" })
 mem_ico.image = image(imgpath..'mem.png')
---mem_ico.resize = false
+mem_ico.resize = false
 mem_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
 memwidget = widget({
     type = 'textbox',
@@ -183,7 +183,7 @@ line = awful.util.pread("grep -i swap /etc/fstab | head -1")
 if string.match(line, 'swap') then
     swp_ico = widget({ type = "imagebox", align = "right" })
     swp_ico.image = image(imgpath..'swp.png')
-    --swp_ico.resize = false
+    swp_ico.resize = false
     swp_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
     swpwidget = widget({
         type = 'textbox',
@@ -242,7 +242,7 @@ wicked.register(cpuwidget, wicked.widgets.cpu, '<span color="white">C1:</span>$2
 
 cpu_ico = widget({ type = "imagebox", align = "right" })
 cpu_ico.image = image(imgpath..'cpu.png')
---cpu_ico.resize = false
+cpu_ico.resize = false
 cpu_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
 cpugraphwidget = widget({ type = 'graph'
                         , name = 'cpugraphwidget'
@@ -279,7 +279,7 @@ cpuwidget.mouse_leave = function() naughty.destroy(pop) end
 --
 fs_ico = widget({ type = "imagebox", align = "right" })
 fs_ico.image = image(imgpath..'fs.png')
---fs_ico.resize = false
+fs_ico.resize = false
 fs_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e mc') end)})
 fswidget = widget({
     type = 'textbox',
@@ -316,7 +316,7 @@ fswidget.mouse_leave = function() naughty.destroy(pop) end
 --
 net_ico = widget({ type = "imagebox", align = "right" })
 net_ico.image = image(imgpath..'net-wired.png')
---net_ico.resize = false
+net_ico.resize = false
 net_ico:buttons({button({ }, 1, function () awful.util.spawn('xterm') end)})
 netwidget = widget({
     type = 'textbox',
@@ -344,7 +344,7 @@ netwidget.mouse_leave = function() naughty.destroy(pop) end
 --
 load_ico = widget({ type = "imagebox", align = "right" })
 load_ico.image = image(imgpath..'load.png')
---load_ico.resize = false
+load_ico.resize = false
 load_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
 
 loadwidget = widget({ type = 'textbox'
@@ -393,7 +393,7 @@ end
 if channel then
     vol_ico = widget({ type = "imagebox", align = "left" })
     vol_ico.image = image(imgpath..'vol.png')
-    --vol_ico.resize = false
+    vol_ico.resize = false
     vol_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e alsamixer') end)})
     volumewidget = widget({ type = 'textbox'
                 , name = 'volumewidget'
@@ -481,6 +481,6 @@ table.insert(my_keys, key({ modkey }, "Up", function () awful.client.focus.byidx
 table.insert(my_keys, key({ modkey }, "Down", function () awful.client.focus.byidx(-1);  if client.focus then client.focus:raise() end end))
 -- }}}
 --- Revelation {{{
-require("revelation")
-table.insert(my_keys, key({ modkey, "Control" }, "x", revelation.revelation))
+--require("revelation")
+--table.insert(my_keys, key({ modkey, "Control" }, "x", revelation.revelation))
 --- }}}
