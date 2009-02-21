@@ -3,8 +3,8 @@
 -- loadfile(awful.util.getdir("config").."/extra.lua")()
 -- ###############################################################################
 -- {{{ Tema
-awesome.font = "smoothansi 9"
-beautiful.font = "smoothansi 9"
+awesome.font = "smoothansi 10"
+beautiful.font = "smoothansi 10"
 --
 --beautiful.bg_normal     = '#222222AA'
 --beautiful.bg_focus      = '#3465a4AA'
