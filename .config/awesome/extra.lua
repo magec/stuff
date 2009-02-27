@@ -57,7 +57,7 @@ function batteryInfo()
     local battery = math.floor(cur * 100 / cap)
     if sta:match("Charging") then
         dir = "+"
-        battery = "A/C ("..battery..")"
+        battery = "A/C("..battery..")"
     elseif sta:match("Discharging") then
         dir = "-"
             if tonumber(battery) < 10 then
@@ -76,6 +76,19 @@ function batteryInfo()
     return battery..dir
 end
 wicked.register(batterywidget, batteryInfo, "$1", 3)
+batterywidget.mouse_enter = function()
+naughty.destroy(pop)
+    local text = awful.util.pread("cat /proc/acpi/battery/BAT0/info")
+    pop = naughty.notify({  title  = '<span color="white">BAT0/info</span>\n'
+                      , text       = awful.util.escape(text)
+                      , icon       = imgpath..'swp.png'
+                      , icon_size  = 32
+                      , timeout    = 0
+                      , position   = "bottom_right"
+                      , bg         = beautiful.bg_focus
+                      })
+end
+batterywidget.mouse_leave = function() naughty.destroy(pop) end
 -- }}}
 -- {{{ Separador (text)
 space = widget({
