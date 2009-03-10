@@ -481,7 +481,7 @@ table.insert(my_keys, key({ modkey, "Control" }, "f", function () awful.util.spa
 table.insert(my_keys, key({ modkey, "Control" }, "g", function () awful.util.spawn('gvim') end))
 table.insert(my_keys, key({ modkey, "Control" }, "a", function () awful.util.spawn('ruc_web_resolucio.sh') end))
 table.insert(my_keys, key({ modkey, "Control" }, "s", function () awful.util.spawn('sonata') end))
-table.insert(my_keys, key({ modkey, "Control" }, "l", function () awful.util.spawn('slock') end))
+table.insert(my_keys, key({ modkey, "Control" }, "x", function () awful.util.spawn('slock') end))
 table.insert(my_keys, key({ modkey, "Control" }, "v", function () awful.util.spawn('urxvtc -e ncmpcpp') end))
 table.insert(my_keys, key({ modkey, "Control" }, "0", function () awful.util.spawn('xrandr -o left') end))
 table.insert(my_keys, key({ modkey, "Control" }, "'", function () awful.util.spawn('xrandr -o normal') end))
