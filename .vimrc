@@ -1,6 +1,7 @@
 "http://www.vim.org/htmldoc/options.html
 "http://rayninfo.co.uk/vimtips.html
 set nocompatible "Usa config por defecto de vim
+set nomodeline "Recomendación de seguridad
 syntax on "Muchos colores
 set paste "No indentar codigo 'pasteado'
 set nobackup "No crea ficheros de backup *~
