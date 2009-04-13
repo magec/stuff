@@ -38,7 +38,7 @@ check() { #{{{ Chequeo local.
     fi
 } #}}}
 create_swap() { #{{{ Crear swap en el remoto.
-    azul "#\n#\tCreando swap ${ARRAY[$FILE]} de $SIZE en $2\n#\n"
+    azul "#\n#\tCreando swap $FILE de $SIZE en $2\n#\n"
     DIR=$(echo $1 | egrep -o '^/.*/')
     ssh -T root@$2 <<EOF
 mkdir -p $DIR && echo "+ Directorio $DIR existente o creado." || exit 1
@@ -84,28 +84,27 @@ EOF
 do_stuff() { #{{{ Bucle principal.
     ARRAY=( $(egrep -io '/[0-z.\/-]+' $1) )
     blan "#\n#\tFicheros en $1\n#\n\n"
-    for FILE in $(seq 0 $((${#ARRAY[@]} - 1))); do
-        test -f ${ARRAY[$FILE]} || continue
-        OUT=$(file -b ${ARRAY[$FILE]})
-        SIZE=$(ls -lh ${ARRAY[$FILE]} | awk '{print $5}')
+    for FILE in ${ARRAY[@]}; do        test -f $FILE || continue
+        OUT=$(file -b $FILE)
+        SIZE=$(ls -lh $FILE | awk '{print $5}')
         if [ `echo "$OUT" | egrep -qi 'swap' ; echo $?` = 0 ]; then
-            echo "Nombre: ${ARRAY[$FILE]}"; echo -ne "Tamaño: $SIZE\nTipo: "; azul "\t$OUT\n\n"
+            echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; azul "\t$OUT\n\n"
             if [ ! -z $3 ] ; then
-                create_swap ${ARRAY[$FILE]} $2 $(ls -l ${ARRAY[$FILE]} | awk '{print $5}')
+                create_swap $FILE $2 $(ls -l $FILE | awk '{print $5}')
             fi
         elif [ `echo "$OUT" | egrep -qi 'ext[2-4]|reiser'; echo $?` = 0 ]; then
-            echo "Nombre: ${ARRAY[$FILE]}"; echo -ne "Tamaño: $SIZE\nTipo: "; amar "\t$OUT\n\n"
+            echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; amar "\t$OUT\n\n"
             if [ ! -z $3 ] ; then
-                create_disk ${ARRAY[$FILE]} $2 $(ls -l ${ARRAY[$FILE]} | awk '{print $5}') $(file -b ${ARRAY[$FILE]} | egrep -o 'ext[2-4]|reiser')
+                create_disk $FILE $2 $(ls -l $FILE | awk '{print $5}') $(file -b $FILE | egrep -o 'ext[2-4]|reiser')
             fi
         elif [ `echo "$OUT" | egrep -qi 'image|zip' ; echo $?` = 0 ]; then
-            echo "Nombre: ${ARRAY[$FILE]}"; echo -ne "Tamaño: $SIZE\nTipo: "; verd "\t$OUT\n\n"
+            echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; verd "\t$OUT\n\n"
             if [ ! -z $3 ] ; then
-                verd "#\n#\tCopiando ${ARRAY[$FILE]} en $2\n#\n"
-                rsync -Raz ${ARRAY[$FILE]} root@$2:/ && verd "#\n#\tOK!\n#\n\n" || error "En la copia."
+                verd "#\n#\tCopiando $FILE en $2\n#\n"
+                rsync -Raz $FILE root@$2:/ && verd "#\n#\tOK!\n#\n\n" || error "En la copia."
             fi
         else
-            echo "Nombre: ${ARRAY[$FILE]}"; echo -ne "Tamaño: $SIZE\nTipo: "; rojo "\t$OUT"; echo -e " (NO se copiará)\n"
+            echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; rojo "\t$OUT"; echo -e " (NO se copiará)\n"
         fi
     done
     if [ ! -z $3 ] ; then
