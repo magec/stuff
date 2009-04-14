@@ -29,12 +29,20 @@ check() { #{{{ Chequeo local.
     done
     if [ `file -b $1 2>/dev/null | egrep -q 'text' ; echo $?` != 0 ]; then
         echo -n "$1 "; rojo "No es un documento de texto.\n"
-        echo "$0, copia domUs de vmware. Uso: $0 <fichero de config> <máquina destino>"
+        echo "$0, copia domUs de xen. Uso: $0 <fichero de config> <máquina destino>"
         exit 1
     fi
-    if [ `nc -zw1 $2 22; echo $?` != 0 ]; then
+    if [ `netcat -zw1 $2 22; echo $?` != 0 ]; then
         echo -n "$2 "; rojo "No es accesible por el puerto 22.\n"
         exit 1
+    fi
+    DOMU=$(egrep -i '^name *= *' $1 | cut -d '=' -f2 | sed -e s/[^0-z\.]//g)
+    test -z $DOMU && error "El domu no tiene nombre."
+    if [ -f `which xm` ]; then 
+	if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
+    fi
+    if [ -f `which xm-ha` ]; then 
+	if [ `xm-ha list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm-ha list' reporta que $DOMU está corriendo." ; fi
     fi
 } #}}}
 create_swap() { #{{{ Crear swap en el remoto.
@@ -61,7 +69,7 @@ EOF
     DISK=$(echo "$1" | egrep -o '[^/]+$')
     amar "#\n#\tCreando y montando imagen local en /mnt/_$DISK\n#\n"
     mkdir -p /mnt/_$DISK && echo "+ Punto de montaje /mnt/_$DISK creado." || exit 1
-    mount -o loop $1 /mnt/_$DISK && echo "+ Imagen $1 montada." || exit 1
+    mount -o loop,ro $1 /mnt/_$DISK && echo "+ Imagen $1 montada." || exit 1
     amar "#\n#\tOK!\n#\n"
     amar "#\n#\tCreando y montando imagen remota en /mnt/_$DISK\n#\n"
     ssh -T root@$2 <<EOF
