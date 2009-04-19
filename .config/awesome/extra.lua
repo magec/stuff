@@ -1,59 +1,108 @@
 -- ###############################################################################
--- Insertar la siguiente linea en rc.lua despues de "beautiful.init(theme_path)":
 -- loadfile(awful.util.getdir("config").."/extra.lua")()
 -- ###############################################################################
--- {{{ Tema
-awesome.font = "smoothansi 10"
-beautiful.font = "smoothansi 10"
+--{{{   Tema
+--awesome.font = "smoothansi 10"
+--beautiful.font = "smoothansi 10"
 --
 --beautiful.bg_normal     = '#222222AA'
 --beautiful.bg_focus      = '#3465a4AA'
---beautiful.border_width  = 2
---beautiful.border_normal = '#555555'
-beautiful.bg_normal     = '#000000AA'
-beautiful.bg_focus      = '#2F4F4FAA'
-beautiful.bg_urgent     = '#8B0000'
-beautiful.fg_normal     = '#F5DEB3'
-beautiful.fg_focus      = '#FFA500'
-beautiful.fg_urgent     = '#FFFF00'
-beautiful.border_width  = 1
-beautiful.border_normal = '#2F4F4F66'
-beautiful.border_focus  = '#FFA50066'
-beautiful.border_marked = '#8B000066'
--- }}}
--- {{{ Inicializacion
--- usamos muchos widgets genericos de wicked
+--beautiful.bg_normal     = '#000000AA'
+--beautiful.bg_focus      = '#2F4F4FAA'
+--beautiful.bg_urgent     = '#8B0000'
+--beautiful.fg_normal     = '#F5DEB3'
+--beautiful.fg_focus      = '#FFA500'
+--beautiful.fg_urgent     = '#FFFF00'
+--beautiful.border_width  = 1
+--beautiful.border_normal = '#2F4F4F66'
+--beautiful.border_focus  = '#FFA50066'
+--beautiful.border_marked = '#8B000066'
+--}}}
+--{{{   Inicializacion
+--  usamos muchos widgets genericos de wicked
 require("wicked")
-modkey = "Mod4"
--- Wallpaper
+--  Wallpaper
 imgpath = awful.util.getdir("config")..'/imgs/'
 setrndwall = "awsetbg -t -r "..awful.util.getdir("config").."/walls"
 setwall = "awsetbg -c "..awful.util.getdir("config").."/walls/vladstudio_microbes_1920x1200.jpg"
--- }}}
--- {{{ Widgets
+--}}}
+--{{{   Util
+function escape(text)
+    return awful.util.escape(text or 'nil')
+end
+
+-- Copy from awful.util
+function pread(cmd)
+    if cmd and cmd ~= '' then
+        local f, err = io.popen(cmd, 'r')
+        if f then
+            local s = f:read('*all')
+            f:close()
+            return s
+        else
+            print(err)
+        end
+    end
+end
+-- Same as pread, but files instead of processes
+function fread(cmd)
+    if cmd and cmd ~= '' then
+        local f, err = io.open(cmd, 'r')
+        if f then
+            local s = f:read('*all')
+            f:close()
+            return s
+        else
+            print(err)
+        end
+    end
+end
+--
+function createIco(widget,file,click)
+    if not widget or not file or not click then return nil end
+    widget.image = image(imgpath..'/'..file)
+    widget.resize = false
+    widget:buttons({button({ }, 1, function () awful.util.spawn(click) end)})
+end
+--}}}
 -- {{{ Bateria (texto)
-bat_ico = widget({ type = "imagebox", align = "right" })
-bat_ico.image = image(imgpath..'bat.png')
-bat_ico.resize = false
-bat_ico:buttons({button({ }, 1, function () awful.util.spawn('xterm') end)})
-batterywidget = widget({type = "textbox"
-                        , name = "batterywidget"
-                        , align = "right"
-                        })
+if awful.util.pread("/sys/class/power_supply/BAT0/status") ~= '' then
+
+    wicked.register(batterywidget, batteryInfo, "$1", 3)
+
+    bat_ico = widget({ type = "imagebox", align = "right" })
+    createIco(bat_ico,'bat.png','urxvtc -e xterm')
+
+    batterywidget = widget({type = "textbox"
+                            , name = "batterywidget"
+                            , align = "right"
+                            })
+
+    batterywidget.mouse_enter = function()
+        naughty.destroy(pop)
+
+        local text = awful.util.pread("cat /proc/acpi/battery/BAT0/info")
+        pop = naughty.notify({  title  = '<span color="white">BAT0/info</span>\n'
+                      , text       = awful.util.escape(text)
+                      , icon       = imgpath..'swp.png'
+                      , icon_size  = 32
+                      , timeout    = 0
+                      , position   = "bottom_right"
+                      , bg         = beautiful.bg_focus
+                      })
+    end
+
+    batterywidget.mouse_leave = function() naughty.destroy(pop) end
+end
+
 function batteryInfo()
     local adapter = "BAT0"
-    local fcur = io.open("/sys/class/power_supply/"..adapter.."/charge_now")
-    if not fcur then
+    local cur = awful.util.pread("/sys/class/power_supply/"..adapter.."/charge_now")
+    local cap = awful.util.pread("/sys/class/power_supply/"..adapter.."/charge_full")
+    local sta = awful.util.pread("/sys/class/power_supply/"..adapter.."/status")
+    if cur == '' or cap =='' or sta == '' then
         return "A/C"
     end
-    local fcap = io.open("/sys/class/power_supply/"..adapter.."/charge_full")
-    local fsta = io.open("/sys/class/power_supply/"..adapter.."/status")
-    local cur = fcur:read()
-    local cap = fcap:read()
-    local sta = fsta:read()
-    fcur:close()
-    fcap:close()
-    fsta:close()
     local battery = math.floor(cur * 100 / cap)
     if sta:match("Charging") then
         dir = "+"
@@ -75,20 +124,7 @@ function batteryInfo()
     end
     return battery..dir
 end
-wicked.register(batterywidget, batteryInfo, "$1", 3)
-batterywidget.mouse_enter = function()
-naughty.destroy(pop)
-    local text = awful.util.pread("cat /proc/acpi/battery/BAT0/info")
-    pop = naughty.notify({  title  = '<span color="white">BAT0/info</span>\n'
-                      , text       = awful.util.escape(text)
-                      , icon       = imgpath..'swp.png'
-                      , icon_size  = 32
-                      , timeout    = 0
-                      , position   = "bottom_right"
-                      , bg         = beautiful.bg_focus
-                      })
-end
-batterywidget.mouse_leave = function() naughty.destroy(pop) end
+
 -- }}}
 -- {{{ Separador (text)
 space = widget({
@@ -119,9 +155,8 @@ Lseparator.resize = false
 -- {{{ mpd (text) requiere mpc
 --
 mpd_ico = widget({ type = "imagebox", align = "left" })
-mpd_ico.image = image(imgpath..'mpd.png')
-mpd_ico.resize = false
-mpd_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e ncmpcpp') end)})
+createIco(mpd_ico,'mpd.png','urxvtc -e ncmpcpp')
+
 mpdwidget = widget({ type = 'textbox'
             ,name   = 'mpdwidget'
         ,align  = 'flex'
@@ -166,9 +201,8 @@ mpdwidget.mouse_leave = function() naughty.destroy(pop) end
 -- {{{ Memory (text)
 --
 mem_ico = widget({ type = "imagebox", align = "right" })
-mem_ico.image = image(imgpath..'mem.png')
-mem_ico.resize = false
-mem_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
+createIco(mem_ico,'mem.png','urxvtc -e htop')
+
 memwidget = widget({
     type = 'textbox',
     name = 'memwidget',
@@ -195,9 +229,8 @@ memwidget.mouse_leave = function() naughty.destroy(pop) end
 line = awful.util.pread("grep -i swap /etc/fstab | head -1")
 if string.match(line, 'swap') then
     swp_ico = widget({ type = "imagebox", align = "right" })
-    swp_ico.image = image(imgpath..'swp.png')
-    swp_ico.resize = false
-    swp_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
+    createIco(swp_ico,'swp.png','urxvtc -e htop')
+
     swpwidget = widget({
         type = 'textbox',
         name = 'swpwidget',
@@ -254,9 +287,8 @@ wicked.register(cpuwidget, wicked.widgets.cpu, '<span color="white">C1:</span>$2
 --
 
 cpu_ico = widget({ type = "imagebox", align = "right" })
-cpu_ico.image = image(imgpath..'cpu.png')
-cpu_ico.resize = false
-cpu_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
+createIco(cpu_ico,'cpu.png','urxvtc -e htop')
+
 cpugraphwidget = widget({ type = 'graph'
                         , name = 'cpugraphwidget'
                         , align = 'right'
@@ -291,9 +323,8 @@ cpuwidget.mouse_leave = function() naughty.destroy(pop) end
 -- {{{ FileSystem (text)
 --
 fs_ico = widget({ type = "imagebox", align = "right" })
-fs_ico.image = image(imgpath..'fs.png')
-fs_ico.resize = false
-fs_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e mc') end)})
+createIco(fs_ico,'fs.png','urxvtc -e fdisk -l')
+
 fswidget = widget({
     type = 'textbox',
     name = 'fswidget',
@@ -328,9 +359,8 @@ fswidget.mouse_leave = function() naughty.destroy(pop) end
 -- {{{ Net (text)
 --
 net_ico = widget({ type = "imagebox", align = "right" })
-net_ico.image = image(imgpath..'net-wired.png')
-net_ico.resize = false
-net_ico:buttons({button({ }, 1, function () awful.util.spawn('xterm') end)})
+createIco(net_ico,'net-wired.png','urxvtc -e netstat -ltunpp')
+
 netwidget = widget({
     type = 'textbox',
     name = 'netwidget',
@@ -356,9 +386,7 @@ netwidget.mouse_leave = function() naughty.destroy(pop) end
 -- {{{ Load (text)
 --
 load_ico = widget({ type = "imagebox", align = "right" })
-load_ico.image = image(imgpath..'load.png')
-load_ico.resize = false
-load_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e htop') end)})
+createIco(load_ico,'load.png','urxvtc -e htop')
 
 loadwidget = widget({ type = 'textbox'
                     , name = 'loadwidget'
@@ -388,50 +416,58 @@ loadwidget.mouse_leave = function() naughty.destroy(pop) end
 -- }}}
 -- {{{ Volume (Custom) requiere alsa-utils
 --
-line = awful.util.pread("amixer -c 0 | head -1")
-channel = string.match(line, ".+'(%w+)'.+")
-function getVol()
-    local status = io.popen("amixer -c 0 -- sget ".. channel):read("*all")
-    local volume = string.match(status, "(%d?%d?%d)%%")
-    volume = string.format("%3d", volume)
-    status = string.match(status, "%[(o[^%]]*)%]")
-    if status and string.find(status, "on", 1, true) then
-        volume = volume.."%"
+function getVol(widget, mixer)
+    if not widget or not mixer then return nil end
+    local vol = ''
+    local txt = pread('amixer get '..mixer)
+    if txt:match('%[off%]') then
+        vol = 'Mute'
     else
-        volume = volume.."M"
+        vol = txt:match('%[(%d+%%)%]')
     end
-        volumewidget.text = volume
-        return volume
+
+    widget.text = vol
 end
-if channel then
+--
+line = awful.util.pread("amixer -c 0 | head -1")
+if line and line ~= '' then
+    channel = string.match(line, ".+'(%w+)'.+")
+end
+--
+function createIco(widget,file,click)
+    if not widget or not file or not click then return nil end
+    widget.image = image(imgpath..'/'..file)
+    widget.resize = false
+    widget:buttons({button({ }, 1, function () awful.util.spawn(click) end)})
+end
+
+
+if channel and channel ~= '' then
     vol_ico = widget({ type = "imagebox", align = "left" })
-    vol_ico.image = image(imgpath..'vol.png')
-    vol_ico.resize = false
-    vol_ico:buttons({button({ }, 1, function () awful.util.spawn('urxvtc -e alsamixer') end)})
+    createIco(vol_ico,'vol.png','urxvtc -e alsamixer')
     volumewidget = widget({ type = 'textbox'
                 , name = 'volumewidget'
                 , align = 'left'
                 })
-    wicked.register(volumewidget, getVol, "$1", 5)
+    getVol(volumewidget, channel)
     volumewidget:buttons({
         button({ }, 4, function()
              awful.util.spawn('amixer -c 0 set '..channel..' 3dB+');
-             getVol()
+            getVol(volumewidget, channel)
         end),
         button({ }, 5, function()
              awful.util.spawn('amixer -c 0 set '..channel..' 3dB-');
-             getVol()
+             getVol(volumewidget, channel)
         end),
     })
 end
 -- }}}
--- Cierre de Widgets}}}
 -- {{{ Wibox
 for s = 1, screen.count() do
     -- Defino la barra
-    mywibox_b = {}
+    statusbar = {}
     -- La creo
-    mywibox_b[s] = wibox({ position = "bottom"
+    statusbar[s] = wibox({ position = "bottom"
                 , fg = beautiful.fg_normal
                 , bg = beautiful.bg_normal
                 , border_color = beautiful.border_normal
@@ -439,60 +475,59 @@ for s = 1, screen.count() do
                 , border_width = 1
                 })
     -- Le enchufo los widgets
-    mywibox_b[s].widgets = { vol_ico
-                , volumewidget
-                , Lseparator
-                , mpd_ico
-                , mpdwidget
-                , Rseparator
-                , load_ico
-                , loadwidget
-                , Rseparator
-                , cpu_ico
-                , cpuwidget
-                , cpugraphwidget
-                , Rseparator
-                , mem_ico
-                , memwidget
-                , membarwidget
-                , swp_ico
-                , swpwidget
-                , Rseparator
-                , bat_ico
-                , batterywidget
-                , Rseparator
-                , fs_ico
-                , fswidget
-                , Rseparator
-                , net_ico
-                , netwidget
-                , s == 1 and mysystray or nil }
-    mywibox_b[s].screen = s
+    statusbar[s].widgets = { vol_ico
+                           , volumewidget
+                           , Lseparator
+                           , mpd_ico
+                           , mpdwidget
+                           , Rseparator
+                           , load_ico
+                           , loadwidget
+                           , Rseparator
+                           , cpu_ico
+                           , cpuwidget
+                           , cpugraphwidget
+                           , mem_ico
+                           , memwidget
+                           , membarwidget
+                           , swp_ico
+                           , swpwidget
+                           , Rseparator
+                           , bat_ico
+                           , batterywidget
+                           , batterywidget and Rseparator or nil
+                           , fs_ico
+                           , fswidget
+                           , Rseparator
+                           , net_ico
+                           , netwidget
+                           }
+    statusbar[s].screen = s
 end
 -- }}}
 --  {{{ Mis Hotkeys
-my_keys = {}
-table.insert(my_keys, key({ modkey, "Control" }, "w", function () awful.util.spawn(setrndwall) end))
-table.insert(my_keys, key({ modkey, "Control" }, "q", function () awful.util.spawn(setwall) end))
-table.insert(my_keys, key({ modkey, "Control" }, "t", function () awful.util.spawn('thunar') end))
-table.insert(my_keys, key({ modkey, "Control" }, "p", function () awful.util.spawn('pidgin') end))
-table.insert(my_keys, key({ modkey, "Control" }, "c", function () awful.util.spawn('urxvtc -e mc') end))
-table.insert(my_keys, key({ modkey, "Control" }, "f", function () awful.util.spawn('firefox') end))
-table.insert(my_keys, key({ modkey, "Control" }, "g", function () awful.util.spawn('gvim') end))
-table.insert(my_keys, key({ modkey, "Control" }, "a", function () awful.util.spawn('ruc_web_resolucio.sh') end))
-table.insert(my_keys, key({ modkey, "Control" }, "s", function () awful.util.spawn('sonata') end))
-table.insert(my_keys, key({ modkey, "Control" }, "x", function () awful.util.spawn('slock') end))
-table.insert(my_keys, key({ modkey, "Control" }, "v", function () awful.util.spawn('urxvtc -e ncmpcpp') end))
-table.insert(my_keys, key({ modkey, "Control" }, "0", function () awful.util.spawn('xrandr -o left') end))
-table.insert(my_keys, key({ modkey, "Control" }, "'", function () awful.util.spawn('xrandr -o normal') end))
-table.insert(my_keys, key({ modkey, "Control" }, "b", function () awful.util.spawn('mpc play') end))
-table.insert(my_keys, key({ modkey, "Control" }, "n", function () awful.util.spawn('mpc pause') end))
-table.insert(my_keys, key({ modkey, "Control" }, "m", function () awful.util.spawn('mpc prev'); wicked.widgets.mpd() end))
-table.insert(my_keys, key({ modkey, "Control" }, ",", function () awful.util.spawn('mpc next'); wicked.widgets.mpd() end))
-table.insert(my_keys, key({ modkey, "Control" }, ".", function () awful.util.spawn('amixer -c 0 set '..channel..' 3dB-'); getVol() end))
-table.insert(my_keys, key({ modkey, "Control" }, "-", function () awful.util.spawn('amixer -c 0 set '..channel..' 3dB+'); getVol() end))
-table.insert(my_keys, key({ modkey }, "Up", function () awful.client.focus.byidx(1); if client.focus then client.focus:raise() end end))
-table.insert(my_keys, key({ modkey }, "Down", function () awful.client.focus.byidx(-1);  if client.focus then client.focus:raise() end end))
+--my_keys = {}
+--table.insert(my_keys, key({ modkey, "Control" }, "w", function () awful.util.spawn(setrndwall) end))
+--table.insert(my_keys, key({ modkey, "Control" }, "q", function () awful.util.spawn(setwall) end))
+--table.insert(my_keys, key({ modkey, "Control" }, "t", function () awful.util.spawn('thunar') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "p", function () awful.util.spawn('pidgin') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "c", function () awful.util.spawn('urxvtc -e mc') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "f", function () awful.util.spawn('firefox') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "g", function () awful.util.spawn('gvim') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "a", function () awful.util.spawn('ruc_web_resolucio.sh') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "s", function () awful.util.spawn('sonata') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "x", function () awful.util.spawn('slock') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "v", function () awful.util.spawn('urxvtc -e ncmpcpp') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "0", function () awful.util.spawn('xrandr -o left') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "'", function () awful.util.spawn('xrandr -o normal') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "b", function () awful.util.spawn('mpc play') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "n", function () awful.util.spawn('mpc pause') end))
+--table.insert(my_keys, key({ modkey, "Control" }, "m", function () awful.util.spawn('mpc prev'); wicked.widgets.mpd() end))
+--table.insert(my_keys, key({ modkey, "Control" }, ",", function () awful.util.spawn('mpc next'); wicked.widgets.mpd() end))
+--table.insert(my_keys, key({ modkey, "Control" }, ".", function () awful.util.spawn('amixer -c 0 set '..channel..' 3dB-'); getVol() end))
+--table.insert(my_keys, key({ modkey, "Control" }, "-", function () awful.util.spawn('amixer -c 0 set '..channel..' 3dB+'); getVol() end))
+--table.insert(my_keys, key({ modkey }, "Up", function () awful.client.focus.byidx(1); if client.focus then client.focus:raise() end end))
+--table.insert(my_keys, key({ modkey }, "Down", function () awful.client.focus.byidx(-1);  if client.focus then client.focus:raise() end end))
 -- }}}
 --- Revelation {{{
 --require("revelation")

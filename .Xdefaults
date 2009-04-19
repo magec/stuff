@@ -30,7 +30,7 @@ urxvt*visualBell:        false
 !-------------------------------------------------------------------------------
 urxvt*fading:       30
 urxvt*transparent:  true
-urxvt*background:   rgba:0000/0000/0000/EEEE
+urxvt*background:   rgba:0000/0000/0000/DDDD
 !   Zenburn
 !urxvt*background:   rgba:33FF/33FF/33FF/EEEE
 urxvt*depth:        32
