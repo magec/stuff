@@ -1,5 +1,5 @@
 #!/bin/sh
-# Redirect and log errors to a file
+#   I log
 errorlog="$HOME/.xsession-errors"
 if ( cp /dev/null "$errorlog" 2> /dev/null )
 then
@@ -7,13 +7,11 @@ then
     exec > "$errorlog" 2>&1
     break
 fi
-#
-GDK_USE_XFT=1
-xrdb -merge $HOME/.Xresources &
-xcompmgr &
-urxvtd -o -q -f &
-parcellite &
-wicd-client &
-setxkbmap es &
-#
-exec awesome > $HOME/.awesome.log 2>&1
+#   nasTests
+test -f `which xcompmgr`    && xcompmgr        &
+test -f `which urxvtd`      && urxvtd -o -q -f &
+test -f `which parcellite`  && parcellite      &
+test -f `which wicd-client` && wicd-client     &
+#test -f `which setxkbmap`   && setxkbmap es    &
+#   o-som
+exec awesome > $HOME/.awesome.err 2>&1
