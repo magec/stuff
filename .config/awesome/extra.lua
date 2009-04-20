@@ -61,13 +61,13 @@ end
 function createIco(widget,file,click)
     if not widget or not file or not click then return nil end
     widget.image = image(imgpath..'/'..file)
-    widget.resize = false
+    widget.resize = true
     widget:buttons({button({ }, 1, function () awful.util.spawn(click) end)})
 end
 --}}}
 -- {{{ Bateria (texto)
-if awful.util.pread("/sys/class/power_supply/BAT0/status") ~= '' then
-
+battery = io.open("/sys/class/power_supply/BAT0/charge_now")
+if battery  then
     wicked.register(batterywidget, batteryInfo, "$1", 3)
 
     bat_ico = widget({ type = "imagebox", align = "right" })
@@ -97,12 +97,18 @@ end
 
 function batteryInfo()
     local adapter = "BAT0"
-    local cur = awful.util.pread("/sys/class/power_supply/"..adapter.."/charge_now")
-    local cap = awful.util.pread("/sys/class/power_supply/"..adapter.."/charge_full")
-    local sta = awful.util.pread("/sys/class/power_supply/"..adapter.."/status")
-    if cur == '' or cap =='' or sta == '' then
+    local fcur = io.open("/sys/class/power_supply/"..adapter.."/charge_now")
+    if not fcur then
         return "A/C"
     end
+    local fcap = io.open("/sys/class/power_supply/"..adapter.."/charge_full")
+    local fsta = io.open("/sys/class/power_supply/"..adapter.."/status")
+    local cur = fcur:read()
+    local cap = fcap:read()
+    local sta = fsta:read()
+    fcur:close()
+    fcap:close()
+    fsta:close()
     local battery = math.floor(cur * 100 / cap)
     if sta:match("Charging") then
         dir = "+"
@@ -434,14 +440,6 @@ if line and line ~= '' then
     channel = string.match(line, ".+'(%w+)'.+")
 end
 --
-function createIco(widget,file,click)
-    if not widget or not file or not click then return nil end
-    widget.image = image(imgpath..'/'..file)
-    widget.resize = false
-    widget:buttons({button({ }, 1, function () awful.util.spawn(click) end)})
-end
-
-
 if channel and channel ~= '' then
     vol_ico = widget({ type = "imagebox", align = "left" })
     createIco(vol_ico,'vol.png','urxvtc -e alsamixer')

@@ -38,11 +38,11 @@ check() { #{{{ Chequeo local.
     fi
     DOMU=$(egrep -i '^name *= *' $1 | cut -d '=' -f2 | sed -e s/[^0-z\.]//g)
     test -z $DOMU && error "El domu no tiene nombre."
-    if [ -f `which xm` ]; then 
-	if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
+    if [ -f `which xm` ]; then
+    if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
     fi
-    if [ -f `which xm-ha` ]; then 
-	if [ `xm-ha list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm-ha list' reporta que $DOMU está corriendo." ; fi
+    if [ -f `which xm-ha` ]; then
+    if [ `xm-ha list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm-ha list' reporta que $DOMU está corriendo." ; fi
     fi
 } #}}}
 create_swap() { #{{{ Crear swap en el remoto.
