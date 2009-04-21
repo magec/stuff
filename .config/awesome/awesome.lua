@@ -131,6 +131,7 @@ for s = 1, screen.count() do
     -- Create an imagebox widget which will contains an icon indicating which layout we're using.
     -- We need one layoutbox per screen.
     mylayoutbox[s] = widget({ type = "imagebox", align = "left" })
+    mylayoutbox[s].resize = false
     mylayoutbox[s]:buttons({ button({ }, 1, function () awful.layout.inc(layouts, 1) end),
                              button({ }, 3, function () awful.layout.inc(layouts, -1) end),
                              button({ }, 4, function () awful.layout.inc(layouts, 1) end),
@@ -148,7 +149,6 @@ for s = 1, screen.count() do
                          fg           = beautiful.fg_normal, 
                          bg           = beautiful.bg_normal, 
                          border_width = "1",
-                         height = 20,
                          border_color = beautiful.border_normal
                          })
     -- Add widgets to the wibox - order matters
