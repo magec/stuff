@@ -445,9 +445,13 @@ end)
 
 -- Hook called every 10 sec
 awful.hooks.timer.register(10, function ()
-    getVol(volumewidget, channel)
+    if volumewidget and channel then getVol(volumewidget, channel) end
 end)
 
+
+awful.hooks.timer.register(30, function ()
+    if batterywidget then batInfo(batterywidget) end
+end)
 
 -- Hook called every minute
 awful.hooks.timer.register(60, function ()
