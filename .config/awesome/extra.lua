@@ -43,7 +43,7 @@ end
 function createIco(widget,file,click)
     if not widget or not file or not click then return nil end
     widget.image = image(imgpath..'/'..file)
-    widget.resize = true
+    widget.resize = false
     widget:buttons({button({ }, 1, function () awful.util.spawn(click) end)})
 end
 --}}}
@@ -426,7 +426,7 @@ for s = 1, screen.count() do
                 , fg = beautiful.fg_normal
                 , bg = beautiful.bg_normal
                 , border_color = beautiful.border_normal
-                , height = 16
+                , height = 15
                 , border_width = 1
                 })
     -- Le enchufo los widgets

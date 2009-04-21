@@ -148,6 +148,7 @@ for s = 1, screen.count() do
                          fg           = beautiful.fg_normal, 
                          bg           = beautiful.bg_normal, 
                          border_width = "1",
+                         height = 20,
                          border_color = beautiful.border_normal
                          })
     -- Add widgets to the wibox - order matters
