@@ -39,10 +39,10 @@ check() { #{{{ Chequeo local.
     DOMU=$(egrep -i '^name *= *' $1 | cut -d '=' -f2 | sed -e s/[^0-z\.]//g)
     test -z $DOMU && error "El domu no tiene nombre."
     if [ -f `which xm` ]; then
-    if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
+        if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
     fi
     if [ -f `which xm-ha` ]; then
-    if [ `xm-ha list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm-ha list' reporta que $DOMU está corriendo." ; fi
+        if [ `xm-ha list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm-ha list' reporta que $DOMU está corriendo." ; fi
     fi
 } #}}}
 create_swap() { #{{{ Crear swap en el remoto.
@@ -56,7 +56,7 @@ mkswap $1 >/dev/null 2>&1 && echo "+ Swapfile formateado." || exit 1
 EOF
     test "$?" == "0" && azul "#\n#\tOK!\n#\n" || error "Al crear el fichero de swap remoto."
 } #}}}
-create_disk() { #{{{ Crear filesuystem en el remoto.
+create_disk() { #{{{ Crear filesystem en el remoto.
     amar "#\n#\tCreando imagen $1 en $2 con filesystem $4 y tamaño $3\n#\n"
     DIR=$(echo $1 | egrep -o '^/.*/')
     ssh -T root@$2 <<EOF
@@ -87,12 +87,13 @@ EOF
 umount /mnt/_$DISK && echo "+ Desmontando /mnt/_$DISK (remoto)." || exit 1
 rmdir /mnt/_$DISK && echo "+ Eliminando /mnt/_$DISK (remoto)." || exit 1
 EOF
-    test "$?" == "0" && amar "#\n#\tOK!\n#\n" || error "Al desmontar/elminar punto de montaje remoto."
+    test "$?" == "0" && amar "#\n#\tOK!\n#\n" || error "Al desmontar/eliminar punto de montaje remoto."
 } #}}}
 do_stuff() { #{{{ Bucle principal.
     ARRAY=( $(egrep -io '/[0-z.\/-]+' $1) )
     blan "#\n#\tFicheros en $1\n#\n\n"
-    for FILE in ${ARRAY[@]}; do        test -f $FILE || continue
+    for FILE in ${ARRAY[@]}; do
+        test -f $FILE || continue
         OUT=$(file -b $FILE)
         SIZE=$(ls -lh $FILE | awk '{print $5}')
         if [ `echo "$OUT" | egrep -qi 'swap' ; echo $?` = 0 ]; then

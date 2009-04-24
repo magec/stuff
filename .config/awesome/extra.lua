@@ -50,19 +50,18 @@ end
 --}}}
 --{{{    Mail (texto)
 --------------------------------------------------------------------------------
---mail=pread('wget -qO - --http-user=oprietop@intranet.uoc.edu --http-passwd=uocuocuoc https://mail.google.com/a/intranet.uoc.edu/feed/atom/unread')
 function checkMail()
     mail = fread(confdir..mailadd) or 'ASDF'
-    local lcount = '0'
+    local lcount = 0
     if mail:match('fullcount>%d+<') then
         lcount = mail:match('fullcount>(%d+)<')
     end
 
     if lcount ~= count then
         for title,summary,name,email in mail:gmatch('<entry>\n<title>(.-)</title>\n<summary>(.-)</summary>.-<name>(.-)</name>\n<email>(.-)</email>') do
-            naughty.notify({ title      = '<span color="white">New mail!</span>'
-                           , text       = awful.util.escape(name..' ('..email..')\n'..title..'\n'..summary)
-                           , timeout    = 10
+            naughty.notify({ title      = '<span color="white">MAIL:</span>'
+                           , text       = '<b>'..awful.util.escape(name..' ('..email..')\n'..title..'\n'..summary)..'</b>'
+                           , timeout    = 20
                            , position   = "top_right"
                            , fg         = beautiful.fg_focus
                            , bg         = beautiful.bg_focus
@@ -70,44 +69,42 @@ function checkMail()
         end
         count = lcount
     end
-
-    mailwidget.text = 'MAILSES: '..lcount
+    if tonumber(lcount) > 0 then
+        mailwidget.text = '<span color="red"><b>'..lcount..'</b></span>'
+    else
+        mailwidget.text = 0
+    end
 end
 
-function getmail()
-    if confdir and mailadd and confdir then os.execute('wget -qO - --http-user='..mailadd..' --http-passwd='..mailpass..' https://mail.google.com/a/intranet.uoc.edu/feed/atom/unread > '..confdir..mailadd ) end
+function getMail()
+    if confdir and mailadd and mailpass then os.execute('wget -qO "'..confdir..mailadd..'" --http-user='..mailadd..' --http-passwd="'..mailpass..'" https://mail.google.com/a/intranet.uoc.edu/feed/atom/unread') end
 end
 
-mailadd = 'oprietop@intranet.uoc.edu'
---mailpass = ''
-
+mailadd = oprietop@intranet.uoc.edu
+mailpass = awful.util.escape(fread(confdir..mailadd..'.passwd'))
 
 if mailpass then
-    count = '0'
-    mailwidget = widget({ type  = "textbox"
-                           , name  = "mailwidget"
-                           , align = "right"
-                           })
+    count = 0
 
+    mail_ico = widget({ type = "imagebox", align = "right" })
+    createIco(mail_ico,'mail.png','firefox https://mail.google.com/a/intranet.uoc.edu')
+    mailwidget = widget({ type  = "textbox"
+                        , name  = "mailwidget"
+                        , align = "right"
+                        })
     checkMail()
+
     mailwidget.mouse_enter = function()
-    naughty.destroy(pop)
-    pop = naughty.notify({  title  = '<span color="white">Mail</span>\n'
-                  , text       = awful.util.escape(mail)
-                  , icon       = imgpath..'swp.png'
-                  , icon_size  = 32
-                  , timeout    = 0
-                  , position   = "bottom_right"
-                  , bg         = beautiful.bg_focus
-                  })
+        count = 0
+        checkMail()
     end
 
     mailwidget:buttons({
         button({ }, 1, function ()
-            getmail()
-  awful.util.spawn('mpc play')
-end),
-})
+            getMail()
+            awful.util.spawn('firefox https://mail.google.com/a/intranet.uoc.edu')
+        end),
+    })
 end
 
 
@@ -115,64 +112,63 @@ end
 --{{{    Bateria (texto)
 --------------------------------------------------------------------------------
 function batInfo(widget)
-local cur = fread("/sys/class/power_supply/BAT0/charge_now")
-local cap = fread("/sys/class/power_supply/BAT0/charge_full")
-local sta = fread("/sys/class/power_supply/BAT0/status")
-if not cur or not cap or not sta then
-widget.text = 'ERR'
-return
-end
-local battery = math.floor(cur * 100 / cap)
-if sta:match("Charging") then
-dir = "+"
-battery = "A/C~"..battery
-elseif sta:match("Discharging") then
-dir = "-"
-    if tonumber(battery) < 10 then
-        naughty.notify({ title      = '<span color="white">Battery Warning</span>\n'
-                       , text       = "Battery low!"..battery.."% left!"
-                       , timeout    = 10
-                       , position   = "top_right"
-                       , fg         = beautiful.fg_focus
-                       , bg         = beautiful.bg_focus
-                       })
+    local cur = fread("/sys/class/power_supply/BAT0/charge_now")
+    local cap = fread("/sys/class/power_supply/BAT0/charge_full")
+    local sta = fread("/sys/class/power_supply/BAT0/status")
+    if not cur or not cap or not sta then
+        widget.text = 'ERR'
+        return
     end
-else
-dir = "="
-battery = "A/C~"
-end
-widget.text = battery..dir
+    local battery = math.floor(cur * 100 / cap)
+    if sta:match("Charging") then
+        dir = "+"
+        battery = "A/C~"..battery
+        elseif sta:match("Discharging") then
+        dir = "-"
+        if tonumber(battery) < 10 then
+            naughty.notify({ title      = '<span color="white">Battery Warning</span>\n'
+                           , text       = "Battery low!"..battery.."% left!"
+                           , timeout    = 10
+                           , position   = "top_right"
+                           , fg         = beautiful.fg_focus
+                           , bg         = beautiful.bg_focus
+                           })
+        end
+    else
+        dir = "="
+        battery = "A/C~"
+    end
+    widget.text = battery..dir
 end
 battery = io.open("/sys/class/power_supply/BAT0/charge_now")
 if battery then
 bat_ico = widget({ type = "imagebox", align = "right" })
 createIco(bat_ico,'bat.png','urxvtc -e xterm')
 batterywidget = widget({ type  = "textbox"
-                   , name  = "batterywidget"
-                   , align = "right"
-                   })
+                       , name  = "batterywidget"
+                       , align = "right"
+                       })
 batInfo(batterywidget)
 batterywidget.mouse_enter = function()
 naughty.destroy(pop)
 local text = fread("/proc/acpi/battery/BAT0/info")
-pop = naughty.notify({  title  = '<span color="white">BAT0/info</span>\n'
-              , text       = awful.util.escape(text)
-              , icon       = imgpath..'swp.png'
-              , icon_size  = 32
-              , timeout    = 0
-              , position   = "bottom_right"
-              , bg         = beautiful.bg_focus
-              })
+pop = naughty.notify({ title  = '<span color="white">BAT0/info</span>\n'
+                     , text       = awful.util.escape(text)
+                     , icon       = imgpath..'swp.png'
+                     , icon_size  = 32
+                     , timeout    = 0
+                     , position   = "bottom_right"
+                     , bg         = beautiful.bg_focus
+                     })
 end
 batterywidget.mouse_leave = function() naughty.destroy(pop) end
 end
 --}}}
 --{{{    Separador (text)
-space = widget({
-type = 'textbox',
-name = 'space',
-align = 'right'
-})
+space = widget({ type = 'textbox'
+               , name = 'space'
+               , align = 'right'
+               })
 function pipe()
 return {" "}
 end
@@ -181,15 +177,15 @@ wicked.register(space, pipe, '<span color="green">$1</span>')
 --{{{    Separadores (img)
 --------------------------------------------------------------------------------
 Rseparator = widget({ type = 'imagebox'
-, name  = 'Rseparator'
-, align = 'right'
-})
+                    , name  = 'Rseparator'
+                    , align = 'right'
+                    })
 Rseparator.image = image(awful.util.getdir("config").."/imgs/separador2.png")
 Rseparator.resize = false
 Lseparator = widget({ type = 'imagebox'
-, name  = 'Lseparator'
-, align = 'left'
-})
+                    , name  = 'Lseparator'
+                    , align = 'left'
+                    })
 Lseparator.image = image(awful.util.getdir("config").."/imgs/separador2.png")
 Lseparator.resize = false
 --}}}
@@ -198,30 +194,30 @@ Lseparator.resize = false
 mpd_ico = widget({ type = "imagebox", align = "left" })
 createIco(mpd_ico,'mpd.png','urxvtc -e ncmpcpp')
 mpdwidget = widget({ type = 'textbox'
-    ,name   = 'mpdwidget'
-,align  = 'flex'
-})
+                   ,name  = 'mpdwidget'
+                   ,align  = 'flex'
+                   })
 wicked.register(mpdwidget, wicked.widgets.mpd, '"$1"')
 mpdwidget:buttons({
-button({ }, 1, function ()
-awful.util.spawn('mpc play')
-end),
-button({ }, 2, function ()
-awful.util.spawn('mpc stop')
-end),
-button({ }, 3, function ()
-awful.util.spawn('mpc pause')
-end),
-button({ }, 4, function()
-awful.util.spawn('mpc prev')
-wicked.widgets.mpd()
-mpdwidget.mouse_enter()
-end),
-button({ }, 5, function()
-awful.util.spawn('mpc next')
-wicked.widgets.mpd()
-mpdwidget.mouse_enter()
-end),
+    button({ }, 1, function ()
+        awful.util.spawn('mpc play')
+    end),
+    button({ }, 2, function ()
+        awful.util.spawn('mpc stop')
+    end),
+    button({ }, 3, function ()
+        awful.util.spawn('mpc pause')
+    end),
+    button({ }, 4, function()
+        awful.util.spawn('mpc prev')
+        wicked.widgets.mpd()
+        mpdwidget.mouse_enter()
+    end),
+    button({ }, 5, function()
+        awful.util.spawn('mpc next')
+        wicked.widgets.mpd()
+        mpdwidget.mouse_enter()
+    end),
 })
 mpdwidget.mouse_enter = function()
 naughty.destroy(pop)
@@ -242,21 +238,28 @@ mpdwidget.mouse_leave = function() naughty.destroy(pop) end
 --------------------------------------------------------------------------------
 mem_ico = widget({ type = "imagebox", align = "right" })
 createIco(mem_ico,'mem.png','urxvtc -e htop')
-memwidget = widget({
-type = 'textbox',
-name = 'memwidget',
-align = 'right'
-})
+memwidget = widget({ type = 'textbox'
+                   , name = 'memwidget'
+                   , align = 'right'
+                   })
 
 function activeram()
-local active, total
-for line in io.lines('/proc/meminfo') do
-for key, value in string.gmatch(line, "(%w+):\ +(%d+).+") do
-   if key == "Active" then active = tonumber(value)
-   elseif key == "MemTotal" then total = tonumber(value) end
-end
-end
-return string.format("%.2fMB",(active/1024))..'('..string.format("%.0f%%",(active/total)*100)..')'
+    local active,total,free,buffers,cached
+    for line in io.lines('/proc/meminfo') do
+        for key, value in string.gmatch(line, "(%w+):\ +(%d+).+") do
+            if key == "MemTotal" then
+                total = tonumber(value)
+            elseif key == "MemFree" then
+                free = tonumber(value)
+            elseif key == "Buffers" then
+                buffers = tonumber(value)
+            elseif key == "Cached" then
+                cached = tonumber(value)
+            end
+        end
+    end
+    active = total-(free+buffers+cached)
+    return string.format("%.2fMB",(active/1024))..'('..string.format("%.0f%%",(active/total)*100)..')'
 end
 
 memwidget.text = activeram()
@@ -282,19 +285,21 @@ line = awful.util.pread("grep -i swap /etc/fstab | head -1")
 if string.match(line, 'swap') then
 swp_ico = widget({ type = "imagebox", align = "right" })
 createIco(swp_ico,'swp.png','urxvtc -e htop')
-swpwidget = widget({
-type = 'textbox',
-name = 'swpwidget',
-align = 'right'
-})
+swpwidget = widget({ type = 'textbox'
+                   , name = 'swpwidget'
+                   , align = 'right'
+                   })
 
 function activeswap()
 local active, total, free
 for line in io.lines('/proc/meminfo') do
-for key, value in string.gmatch(line, "(%w+):\ +(%d+).+") do
-   if key == "SwapFree" then free = tonumber(value)
-   elseif key == "SwapTotal" then total = tonumber(value) end
-end
+    for key, value in string.gmatch(line, "(%w+):\ +(%d+).+") do
+        if key == "SwapFree" then
+            free = tonumber(value)
+        elseif key == "SwapTotal" then
+            total = tonumber(value)
+        end
+    end
 end
 active = total - free
 return string.format("%.2fMB",(active/1024))..'('..string.format("%.0f%%",(active/total)*100)..')'
@@ -302,9 +307,6 @@ end
 
 swpwidget.text = activeswap()
 
-
-
---    wicked.register(swpwidget, wicked.widgets.swap, '$2Mb($1%)')
 swpwidget.mouse_enter = function()
 naughty.destroy(pop)
 local text = fread("/proc/meminfo")
@@ -372,13 +374,12 @@ cpugraphwidget:plot_properties_set('cpu', { fg = '#00FF00'
 wicked.register(cpugraphwidget, wicked.widgets.cpu, '$1', 1, 'cpu')
 cpuwidget.mouse_enter = function()
 naughty.destroy(pop)
-local text = pread("ps afo pid,tty,stat,time,pcpu,pmem,comm")
+local text = pread("ps -eo %cpu,%mem,ruser,pid,comm --sort -%cpu | head -20")
 pop = naughty.notify({ title     = '<span color="white">Processes</span>\n'
                  , text      = awful.util.escape(text)
                  , icon      = imgpath..'cpu.png'
                  , icon_size = 28
                  , timeout   = 0
-                 , width     = 600
                  , position  = "bottom_right"
                  , bg        = beautiful.bg_focus
                  })
@@ -389,34 +390,33 @@ cpuwidget.mouse_leave = function() naughty.destroy(pop) end
 --------------------------------------------------------------------------------
 fs_ico = widget({ type = "imagebox", align = "right" })
 createIco(fs_ico,'fs.png','urxvtc -e fdisk -l')
-fswidget = widget({
-type = 'textbox',
-name = 'fswidget',
-align = 'right'
-})
+fswidget = widget({ type = 'textbox'
+                  , name = 'fswidget'
+                  , align = 'right'
+                  })
 fs_args = '<span color="white">/:</span>${/ usep}%'
 line = awful.util.pread("grep -i home /etc/fstab | head -1")
 if string.match(line, 'home') then
-fs_args = fs_args..'<span color="white">~:</span>${/home usep}%'
+    fs_args = fs_args..'<span color="white">~:</span>${/home usep}%'
 end
 line = awful.util.pread("grep -i /opt /etc/fstab | head -1")
 if string.match(line, 'opt') then
-fs_args = fs_args..'<span color="white">/OPT:</span>${/opt usep}%'
+    fs_args = fs_args..'<span color="white">/OPT:</span>${/opt usep}%'
 end
 wicked.register(fswidget, wicked.widgets.fs, fs_args, 10)
 wicked.widgets.fs()
 fswidget.mouse_enter = function()
-naughty.destroy(pop)
-local text = pread("df -ha")
-pop = naughty.notify({  title  = '<span color="white">Disk Usage</span>\n'
-              , text       = awful.util.escape(text)
-              , icon       = imgpath..'fs.png'
-              , icon_size  = 32
-              , timeout    = 0
-              , width      = 550
-              , position   = "bottom_right"
-              , bg         = beautiful.bg_focus
-              })
+    naughty.destroy(pop)
+    local text = pread("df -ha")
+    pop = naughty.notify({ title  = '<span color="white">Disk Usage</span>'
+                         , text       = awful.util.escape(text..'\n')
+                         , icon       = imgpath..'fs.png'
+                         , icon_size  = 32
+                         , timeout    = 0
+                         , width      = 550
+                         , position   = "bottom_right"
+                         , bg         = beautiful.bg_focus
+                         })
 end
 fswidget.mouse_leave = function() naughty.destroy(pop) end
 --}}}
@@ -424,11 +424,10 @@ fswidget.mouse_leave = function() naughty.destroy(pop) end
 --------------------------------------------------------------------------------
 net_ico = widget({ type = "imagebox", align = "right" })
 createIco(net_ico,'net-wired.png','urxvtc -e netstat -ltunpp')
-netwidget = widget({
-type = 'textbox',
-name = 'netwidget',
-align = 'right'
-})
+netwidget = widget({ type = 'textbox'
+                   , name = 'netwidget'
+                   , align = 'right'
+                   })
 wicked.register(netwidget, wicked.widgets.net, '${eth0 down}', 5, nil, 3)
 -- <span color="white">[</span>${eth0 rx} rx<span color="white">/</span>${eth0 tx} tx<span color="white">]</span>', 5, nil, 3)
 netwidget.mouse_enter = function()
@@ -451,26 +450,26 @@ netwidget.mouse_leave = function() naughty.destroy(pop) end
 load_ico = widget({ type = "imagebox", align = "right" })
 createIco(load_ico,'load.png','urxvtc -e htop')
 loadwidget = widget({ type = 'textbox'
-            , name = 'loadwidget'
-            , align = 'right'
-            })
+                    , name = 'loadwidget'
+                    , align = 'right'
+                    })
 wicked.register(loadwidget, 'function', function (widget, args)
-local n = fread('/proc/loadavg')
-local pos = n:find(' ', n:find(' ', n:find(' ')+1)+1)
-return  n:sub(1,pos-1)
+    local n = fread('/proc/loadavg')
+    local pos = n:find(' ', n:find(' ', n:find(' ')+1)+1)
+    return  n:sub(1,pos-1)
 end, 2)
 loadwidget.mouse_enter = function()
 naughty.destroy(pop)
 local text = pread("uptime; echo; who")
-pop = naughty.notify({  title  = '<span color="white">Uptime</span>\n'
-              , text       = awful.util.escape(text)
-              , icon       = imgpath..'load.png'
-              , icon_size  = 32
-              , timeout    = 0
-              , width      = 600
-              , position   = "bottom_right"
-              , bg         = beautiful.bg_focus
-              })
+pop = naughty.notify({ title  = '<span color="white">Uptime</span>\n'
+                     , text       = awful.util.escape(text)
+                     , icon       = imgpath..'load.png'
+                     , icon_size  = 32
+                     , timeout    = 0
+                     , width      = 600
+                     , position   = "bottom_right"
+                     , bg         = beautiful.bg_focus
+                     })
 end
 loadwidget.mouse_leave = function() naughty.destroy(pop) end
 --}}}
@@ -478,36 +477,36 @@ loadwidget.mouse_leave = function() naughty.destroy(pop) end
 --------------------------------------------------------------------------------
 function getVol(widget, mixer)
 if not widget or not mixer then return nil end
-local vol = ''
-local txt = pread('amixer get '..mixer)
-if txt:match('%[off%]') then
-vol = 'Mute'
-else
-vol = txt:match('%[(%d+%%)%]')
-end
-widget.text = vol
+    local vol = ''
+    local txt = pread('amixer get '..mixer)
+    if txt:match('%[off%]') then
+        vol = 'Mute'
+    else
+        vol = txt:match('%[(%d+%%)%]')
+    end
+    widget.text = vol
 end
 line = pread("amixer -c 0 | head -1")
 if line and line ~= '' then
-channel = string.match(line, ".+'(%w+)'.+")
+    channel = string.match(line, ".+'(%w+)'.+")
 end
 if channel and channel ~= '' then
 vol_ico = widget({ type = "imagebox", align = "left" })
 createIco(vol_ico,'vol.png','urxvtc -e alsamixer')
 volumewidget = widget({ type = 'textbox'
-        , name = 'volumewidget'
-        , align = 'left'
-        })
+                      , name = 'volumewidget'
+                      , align = 'left'
+                      })
 getVol(volumewidget, channel)
 volumewidget:buttons({
-button({ }, 4, function()
-     awful.util.spawn('amixer -c 0 set '..channel..' 3dB+');
-    getVol(volumewidget, channel)
-end),
-button({ }, 5, function()
-     awful.util.spawn('amixer -c 0 set '..channel..' 3dB-');
-     getVol(volumewidget, channel)
-end),
+    button({ }, 4, function()
+        awful.util.spawn('amixer -c 0 set '..channel..' 3dB+');
+        getVol(volumewidget, channel)
+    end),
+    button({ }, 5, function()
+         awful.util.spawn('amixer -c 0 set '..channel..' 3dB-');
+         getVol(volumewidget, channel)
+    end),
 })
 end
 --}}}
@@ -526,34 +525,36 @@ statusbar[s] = wibox({ position = "bottom"
         })
 -- Le enchufo los widgets
 statusbar[s].widgets = { vol_ico
-                   , volumewidget
-                   , volumewidget and Lseparator or nil
-                   , mpd_ico
-                   , mpdwidget
-                   , Rseparator
-                   , mailwidget
-                           , Rseparator
-                           , load_ico
-                           , loadwidget
-                           , Rseparator
-                           , cpu_ico
-                           , cpuwidget
-                           , cpugraphwidget
-                           , mem_ico
-                           , memwidget
-                           , membarwidget
-                           , swp_ico
-                           , swpwidget
-                           , Rseparator
-                           , bat_ico
-                           , batterywidget
-                           , batterywidget and Rseparator or nil
-                           , fs_ico
-                           , fswidget
-                           , Rseparator
-                           , net_ico
-                           , netwidget
-                           }
+                       , volumewidget
+                       , volumewidget and Lseparator or nil
+                       , mpd_ico
+                       , mpdwidget
+                       , Rseparator
+                       , mail_ico
+                       , mailwidget
+                       , mailwidget and Rseparator or nil
+                       , Rseparator
+                       , load_ico
+                       , loadwidget
+                       , Rseparator
+                       , cpu_ico
+                       , cpuwidget
+                       , cpugraphwidget
+                       , mem_ico
+                       , memwidget
+                       , membarwidget
+                       , swp_ico
+                       , swpwidget
+                       , Rseparator
+                       , bat_ico
+                       , batterywidget
+                       , batterywidget and Rseparator or nil
+                       , fs_ico
+                       , fswidget
+                       , Rseparator
+                       , net_ico
+                       , netwidget
+                       }
     statusbar[s].screen = s
 end
 --}}}

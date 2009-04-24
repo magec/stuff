@@ -460,7 +460,7 @@ end)
 -- Hook called every minute
 awful.hooks.timer.register(60, function ()
     mytextbox.text = os.date(" %a %b %d, %H:%M ")
-    if confdir and mailadd and confdir then getmail() end
+    if confdir and mailadd and confdir then getMail() end
 end)
 mytextbox.text = os.date(" %a %b %d, %H:%M ")
 
