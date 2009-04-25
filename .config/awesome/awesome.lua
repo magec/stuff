@@ -444,23 +444,32 @@ awful.hooks.arrange.register(function (screen)
     end
 end)
 
+--  Hook cada 2 segundos
+awful.hooks.timer.register(2, function ()
+    cpuwidget.text = cpu_info()
+    loadwidget.text = avg_load()
+    netwidget.text = net_info()
+end)
+
 -- Hook called every 10 sec
 awful.hooks.timer.register(10, function ()
     if volumewidget and channel then getVol(volumewidget, channel) end
     memwidget.text = activeram()
     swpwidget.text = activeswap()
+    mpcwidget.text = mpc_info()
 end)
 
-
+--  Hook cada 30 segundos
 awful.hooks.timer.register(30, function ()
     if batterywidget then batInfo(batterywidget) end
-    if mailwidget then checkMail() end
+    mailwidget.text = check_gmail()
 end)
 
 -- Hook called every minute
 awful.hooks.timer.register(60, function ()
     mytextbox.text = os.date(" %a %b %d, %H:%M ")
-    if confdir and mailadd and confdir then getMail() end
+    getMail()
+    fswidget.text = fs_info()
 end)
 mytextbox.text = os.date(" %a %b %d, %H:%M ")
 
