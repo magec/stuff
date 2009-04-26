@@ -38,13 +38,27 @@ function fread(cmd)
         end
     end
 end
---  menos bloat creadno iconos
+--  menos bloat creando iconos
 function createIco(widget,file,click)
     if not widget or not file or not click then return nil end
     widget.image = image(imgpath..'/'..file)
     widget.resize = false
     widget:buttons({button({ }, 1, function () os.execute(click) end)})
 end
+-- Converts bytes to human-readable units, returns value (number) and unit (string)
+function bytestoh(bytes)
+    local tUnits={"KB","GB","GB","TB","PB"} -- MUST be enough. :D
+    local v,u
+    for k=table.getn(tUnits),1,-1 do
+        if math.mod(bytes,1024^k)~=bytes then v=bytes/(1024^k); u=tUnits[k] break end
+    end
+    return v or bytes,u or "B"
+end
+
+
+
+
+
 --}}}
 --{{{    GMail (imagebox+textbox)
 --------------------------------------------------------------------------------
@@ -57,7 +71,7 @@ mailurl  = 'https://mail.google.com/a/intranet.uoc.edu/feed/atom/unread'
 function check_gmail()
     local feed = fread(confdir..mailadd)
     if not feed or feed == '' then
-         return '<span color="red">X</span>'
+         return nil
     end
     if not count then
         count = 0
@@ -81,9 +95,9 @@ function check_gmail()
         count = lcount
     end
     if tonumber(lcount) > 0 then
-        return '<span color="red">'..lcount..'</span>'
+        return '<span color="red">(<b>'..lcount..'</b>)</span>'
     else
-        return '0'
+        return nil
     end
 end
 --  lanza un wget en background para bajar el feed de gmail.
@@ -344,10 +358,13 @@ function activeswap()
     local active, total, free
     for line in io.lines('/proc/meminfo') do
         for key, value in string.gmatch(line, "(%w+):\ +(%d+).+") do
-            if key == "SwapFree" then
-                free = tonumber(value)
-            elseif key == "SwapTotal" then
+            if key == "SwapTotal" then
+                if tonumber(value) == 0 then
+                    return nil -- No hay Swap!
+                end
                 total = tonumber(value)
+            elseif key == "SwapFree" then
+                free = tonumber(value)
             end
         end
     end
@@ -537,12 +554,12 @@ function net_info()
     if not old_rx or not old_tx or not old_time then
         old_rx,old_tx,old_time = 0,0,1
     end
-    local iface,cur_rx,cur_tx
+    local iface,cur_rx,cur_tx,rx,rxu,tx,txu
     local file = fread("/proc/net/route")
     if file then
         iface = file:match('(%w+)%s+00000000%s+%w+%s+0003%s+')
-        if iface == '' then
-            return "No def GW"
+        if not iface or iface == '' then
+            return nil --'<span color="red">NO</span>' -- "No Def GW"
         end
     else
         return "Err: /proc/net/route."
@@ -556,10 +573,12 @@ function net_info()
     end
     cur_time = os.time()
     interval = cur_time - old_time -- diferencia entre mediciones
-    rx = ( cur_rx - old_rx ) / 1024 / interval -- resultado en kb
-    tx = ( cur_tx - old_tx ) / 1024 / interval
+--    rx = ( cur_rx - old_rx ) / 1024 / interval -- resultado en kb
+--    tx = ( cur_tx - old_tx ) / 1024 / interval
+    rx,rxu = bytestoh( ( cur_rx - old_rx ) / interval )
+    tx,txu = bytestoh( ( cur_tx - old_tx ) / interval )
     old_rx,old_tx,old_time = cur_rx,cur_tx,cur_time
-    return iface..' <span color="white">rx:</span>'..string.format("% 4d",rx)..' <span color="white">tx:</span>'..string.format("% 4d",tx)
+    return iface..'<span color="white">↓</span>'..string.format("%03d%2s",rx,rxu)..'<span color="white">↑</span>'..string.format("%03d%2s",tx,txu)
 end
 --  imagebox
 net_ico = widget({ type = "imagebox", align = "right" })
@@ -625,40 +644,40 @@ loadwidget.mouse_leave = function() naughty.destroy(pop) end
 --}}}
 --{{{    Volume (Custom) requiere alsa-utils
 --------------------------------------------------------------------------------
-function getVol(widget, mixer)
-if not widget or not mixer then return nil end
-    local vol = ''
-    local txt = pread('amixer get '..mixer)
-    if txt:match('%[off%]') then
-        vol = 'Mute'
+-- Devuelve el volumen "Master" en alsa.
+function get_vol()
+    local txt = pread('amixer get Master')
+    if txt then
+        if txt:match('%[off%]') then
+            return 'Mute'
+        else
+            return txt:match('%[(%d+%%)%]')
+        end
     else
-        vol = txt:match('%[(%d+%%)%]')
+        return nil
     end
-    widget.text = vol
 end
-line = pread("amixer -c 0 | head -1")
-if line and line ~= '' then
-    channel = string.match(line, ".+'(%w+)'.+")
-end
-if channel and channel ~= '' then
+--  imagebox
 vol_ico = widget({ type = "imagebox", align = "left" })
 createIco(vol_ico,'vol.png','urxvtc -e alsamixer')
-volumewidget = widget({ type = 'textbox'
-                      , name = 'volumewidget'
+--  textbox
+volwidget = widget({ type = 'textbox'
+                      , name = 'volwidget'
                       , align = 'left'
                       })
-getVol(volumewidget, channel)
-volumewidget:buttons({
+--  primera llamada a la función
+volwidget.text = get_vol()
+--  buttons
+volwidget:buttons({
     button({ }, 4, function()
-        os.execute('amixer -c 0 set '..channel..' 3dB+');
-        getVol(volumewidget, channel)
+        os.execute('amixer -c 0 set Master 3dB+');
+        volwidget.text = get_vol()
     end),
     button({ }, 5, function()
-        os.execute('amixer -c 0 set '..channel..' 3dB-');
-        getVol(volumewidget, channel)
+        os.execute('amixer -c 0 set Master 3dB-');
+        volwidget.text = get_vol()
     end),
 })
-end
 --}}}
 --{{{    Wibox
 --------------------------------------------------------------------------------
@@ -675,15 +694,14 @@ for s = 1, screen.count() do
                          })
     -- Le enchufo los widgets
     statusbar[s].widgets = { vol_ico
-                           , volumewidget
-                           , volumewidget and Lseparator or nil
+                           , volwidget
+                           , volwidget and Lseparator or nil
                            , mpd_ico
                            , mpcwidget
                            , Rseparator
                            , mail_ico
                            , mailwidget
                            , mailwidget and Rseparator or nil
-                           , Rseparator
                            , load_ico
                            , loadwidget
                            , Rseparator
