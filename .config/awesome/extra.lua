@@ -54,11 +54,7 @@ function bytestoh(bytes)
     end
     return v or bytes,u or "B"
 end
-
-
-
-
-
+--
 --}}}
 --{{{    GMail (imagebox+textbox)
 --------------------------------------------------------------------------------
@@ -109,7 +105,7 @@ function getMail()
 end
 --  imagebox
 mail_ico = widget({ type = "imagebox", align = "right" })
-createIco(mail_ico,'mail.png','firefox '..mailurl)
+createIco(mail_ico,'mail.png','firefox "'..mailurl..'"&')
 --  textbox
 mailwidget = widget({ type  = "textbox"
                     , name  = "mailwidget"
@@ -127,7 +123,7 @@ mailwidget.mouse_leave = function() naughty.destroy(pop) end
 mailwidget:buttons({
     button({ }, 1, function ()
         getMail()
-        os.execute('firefox '..mailurl)
+        os.execute('firefox "'..mailurl..'"&')
     end),
 })
 --}}}
@@ -212,7 +208,7 @@ function mpc_info()
         song,state,time = now:match('^(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-)\nvolume')
         if state == 'playing' then
             if song and song ~= '' then
-                return '[Play]<span color="white"> "'..escape(song)..'"</span> '..time
+                return '[Play]<span color="white"> "'..song..'"</span> '..time
             end
         elseif state == 'paused' then
             if song and song ~= '' then
