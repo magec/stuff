@@ -155,9 +155,9 @@ for s = 1, screen.count() do
                                               end, mytasklist.buttons)
 
     -- Create the wibox
-     mywibox[s] = wibox({ position     = "top", 
-                         fg           = beautiful.fg_normal, 
-                         bg           = beautiful.bg_normal, 
+     mywibox[s] = wibox({ position     = "top",
+                         fg           = beautiful.fg_normal,
+                         bg           = beautiful.bg_normal,
                          border_width = "1",
                          border_color = beautiful.border_normal
                          })
@@ -175,10 +175,9 @@ end
 -- Barra de widgets
 loadfile(awful.util.getdir("config").."/extra.lua")()
 
-
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
-    awful.button({ }, 3, function () mymainmenu:toggle() end),
+--    awful.button({ }, 3, function () mymainmenu:toggle() end),
     awful.button({ }, 4, awful.tag.viewnext),
     awful.button({ }, 5, awful.tag.viewprev)
 ))
@@ -231,7 +230,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
 
     -- Prompt
-    awful.key({ modkey }, "r",
+    awful.key({ modkey }, "F1",
               function ()
                   awful.prompt.run({ prompt = "Run: " },
                   mypromptbox[mouse.screen],

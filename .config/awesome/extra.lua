@@ -47,7 +47,7 @@ function createIco(widget,file,click)
 end
 -- Converts bytes to human-readable units, returns value (number) and unit (string)
 function bytestoh(bytes)
-    local tUnits={"KB","GB","GB","TB","PB"} -- MUST be enough. :D
+    local tUnits={"KB","MB","GB","TB","PB"} -- MUST be enough. :D
     local v,u
     for k=table.getn(tUnits),1,-1 do
         if math.mod(bytes,1024^k)~=bytes then v=bytes/(1024^k); u=tUnits[k] break end
@@ -218,7 +218,7 @@ function mpc_info()
             if song and song ~= '' then
                 return '[Wait] '..escape(song)..' '..time
             end
-        elseif now:match('^volume:%s+%d+') then
+        elseif now:match('^volume:') then
             return '[Stop] ZZzzz...'
         else
             return '<span color="red">[DEAD]</span> :_('
@@ -423,7 +423,7 @@ function cpu_info()
         local new_sum   = user + nice + system + idle
         local diff      = new_sum - cpu[s].sum
         cpu[s].res  = 100
-        if diff > 0 then -- should be always true - but on heavy load no update is possible
+        if diff > 0 then -- siempre devería cumplirse, excepto cargas elevadas.
             cpu[s].res = 100 - 100 * (idle - cpu[s].idle) / diff
         end
         cpu[s].sum  = new_sum

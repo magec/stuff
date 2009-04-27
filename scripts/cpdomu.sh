@@ -13,14 +13,14 @@ ssh_init() { #{{{ Inicializar SSH.
     blan "#\n#\tCreando claves RSA contra $1\n#\n"
     rm /tmp/id_rsa* || echo "+ No existen /tmp/id_rsa*, correcto."
     ssh-keygen -N '' -f /tmp/id_rsa -t rsa -q && echo "+ Claves RSA generadas." || error "Al crear claves"
-    blan "#\n#\tLos ficheros anteriores se copiarán.\n#\tInsertar clave de root@$1 para continuar o CTRL+C para salir.\n#\n"
+    blan "#\n#\tLos ficheros anteriores se copiarán.\n#\tClave de root@$1 para continuar o CTRL+C para salir.\n#\n"
     cat /tmp/id_rsa.pub | ssh root@$1 'cat >> .ssh/authorized_keys' && echo "+ Clave pública copiada a $1" || error "al copiar clave pública en $1"
     eval `ssh-agent` >/dev/null 2>&1 && echo "+ ssh-agent lanzado." || error "Al lanzar ssh-agent"
     ssh-add /tmp/id_rsa >/dev/null 2>&1 && echo "+ Clave privada añadida a ssh-agent." || error "Al añadir nuestra clave privada al agente."
     blan "#\n#\tOK!\n#\n"
     blan "#\n#\tChequeo remoto de ficheros:\n#\n"
-    ssh -T root@$1 'which rsync dd mount umount rmdir mkswap dd' || error "Falta un binario en el equipo destino"
-    RHOSTN=$(ssh -T root@$1 'uname -n || exit 1') || error "Al intentar conseguir el hostname remoto."
+    ssh -T 2>/dev/null root@$1 'which rsync dd mount umount rmdir mkswap dd' || error "Falta un binario en el equipo destino"
+    RHOSTN=$(ssh -T 2>/dev/null root@$1 'uname -n || exit 1') || error "Al intentar conseguir el hostname remoto."
     blan "#\n#\tOK!\n#\n"
 } #}}}
 check() { #{{{ Chequeo local.
@@ -37,7 +37,7 @@ check() { #{{{ Chequeo local.
         exit 1
     fi
     DOMU=$(egrep -i '^name *= *' $1 | cut -d '=' -f2 | sed -e s/[^0-z\.]//g)
-    test -z $DOMU && error "El domu no tiene nombre."
+    test -z $DOMU && error "El domu no tiene nombre." || echo "+ El nombre del domu es $DOMU"
     if [ -f `which xm` ]; then
         if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
     fi
@@ -48,31 +48,47 @@ check() { #{{{ Chequeo local.
 create_swap() { #{{{ Crear swap en el remoto.
     azul "#\n#\tCreando swap $FILE de $SIZE en $2\n#\n"
     DIR=$(echo $1 | egrep -o '^/.*/')
-    ssh -T root@$2 <<EOF
+    ssh -T 2>/dev/null root@$2 <<EOF
+which xm || { echo "+ No hay xm en el remoto"; exit 1;}
+xm list $DOMU 2>/dev/null && { echo "+ $DOMU está corriendo en $2"; exit 1;} || echo "+ $DOMU no está corriendo según 'xm list'"
+xm-ha locate $DOMU 2>/dev/null && { echo "+ $DOMU está corriendo en $2"; exit 1;} || echo "+ $DOMU no está corriendo según 'xm-ha locate'(o no existe xm-ha)"
 mkdir -p $DIR && echo "+ Directorio $DIR existente o creado." || exit 1
-test -f $1 && { echo "+ Cuidado, $1 YA existe en $DIR."; exit 1; }
+test -f $1 && { echo "+ Cuidado, $1 YA existe en $DIR."; exit 2; }
 dd if=/dev/null of=$1 bs=1 count=1 seek=$3 >/dev/null 2>&1 && echo "+ Swapfile $1 de tamaño $3 creado." || exit 1
 mkswap $1 >/dev/null 2>&1 && echo "+ Swapfile formateado." || exit 1
 EOF
-    test "$?" == "0" && azul "#\n#\tOK!\n#\n" || error "Al crear el fichero de swap remoto."
+    if [ "$?" == "2" ] ; then
+        rojo "#\n#\tYa existe el fichero de swap en el remoto!\n#\n"
+    elif test "$?" == "0" ; then
+        azul "#\n#\tOK!\n#\n"
+    else
+        error "Al crear el fichero de swap remoto."
+    fi
 } #}}}
 create_disk() { #{{{ Crear filesystem en el remoto.
     amar "#\n#\tCreando imagen $1 en $2 con filesystem $4 y tamaño $3\n#\n"
     DIR=$(echo $1 | egrep -o '^/.*/')
-    ssh -T root@$2 <<EOF
+    ssh -T 2>/dev/null root@$2 <<EOF
 mkdir -p $DIR && echo "+ Directorio $DIR existente o creado." || exit 1
-test -f $1 && { echo "+ Cuidado, $1 YA existe en $DIR."; exit 1; }
+test -f $1 && { echo -e "+ Cuidado, $1 YA existe en $DIR." ; exit 2; }
 dd if=/dev/null of=$1 bs=1 count=1 seek=$3 >/dev/null 2>&1 && echo "+ Imagen $1 de tamaño $3 creada." || exit 1
 mkfs.$4 -F $1 >/dev/null 2>&1 && echo "+ Filesystem $4 creado." || exit 1
 EOF
-    test "$?" == "0" && amar "#\n#\tOK!\n#\n" || error "Al crear la imaden de disco remota."
+    if [ "$?" == "2" ] ; then
+        rojo "#\n#\tYa existe el fichero de disco en el remoto!\n#\n"
+        read -p "Pulse ENTER para hacer rsync entre discos origen/destino o CTRL+C para cancelar..."
+    elif test "$?" == "0" ; then
+        amar "#\n#\tOK!\n#\n" || error "Al crear la imagen de disco remota."
+    else
+        error "Al crear el fichero de disco remoto."
+    fi
     DISK=$(echo "$1" | egrep -o '[^/]+$')
     amar "#\n#\tCreando y montando imagen local en /mnt/_$DISK\n#\n"
     mkdir -p /mnt/_$DISK && echo "+ Punto de montaje /mnt/_$DISK creado." || exit 1
     mount -o loop,ro $1 /mnt/_$DISK && echo "+ Imagen $1 montada." || exit 1
     amar "#\n#\tOK!\n#\n"
     amar "#\n#\tCreando y montando imagen remota en /mnt/_$DISK\n#\n"
-    ssh -T root@$2 <<EOF
+    ssh -T 2>/dev/null root@$2 <<EOF
 mkdir -p /mnt/_$DISK && echo "+ Punto de montaje /mnt/_$DISK creado." || exit 1
 mount -o loop $1 /mnt/_$DISK && echo "+ Imagen $1 montada." || exit 1
 EOF
@@ -83,7 +99,7 @@ EOF
     amar "#\n#\tDesmontando y eliminando puntos de montaje\n#\n"
     umount /mnt/_$DISK && echo "+ Desmontando /mnt/_$DISK (local)." || exit 1
     rmdir /mnt/_$DISK && echo "+ Eliminando /mnt/_$DISK (local)." || exit 1
-    ssh -T root@$2 <<EOF
+    ssh -T 2>/dev/null root@$2 <<EOF
 umount /mnt/_$DISK && echo "+ Desmontando /mnt/_$DISK (remoto)." || exit 1
 rmdir /mnt/_$DISK && echo "+ Eliminando /mnt/_$DISK (remoto)." || exit 1
 EOF
@@ -118,7 +134,7 @@ do_stuff() { #{{{ Bucle principal.
     done
     if [ ! -z $3 ] ; then
         blan "#\n#\tCopiando fichero de configuración $1 a $2:/etc/xen/$RHOSTN\n#\n"
-        ssh -T root@$2 'mkdir -p /etc/xen/$RHOSTN || exit 1' || error "Al crear /etc/xen/$RHOSTN en $2."
+        ssh -T 2>/dev/null root@$2 'mkdir -p /etc/xen/$RHOSTN || exit 1' || error "Al crear /etc/xen/$RHOSTN en $2."
         rsync -az $1 root@$2:/etc/xen/$RHOSTN/ && echo "+ Fichero copiado." || error "En la copia."
     fi
 } #}}}
