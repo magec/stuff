@@ -571,9 +571,11 @@ function net_info()
     interval = cur_time - old_time -- diferencia entre mediciones
 --    rx = ( cur_rx - old_rx ) / 1024 / interval -- resultado en kb
 --    tx = ( cur_tx - old_tx ) / 1024 / interval
-    rx,rxu = bytestoh( ( cur_rx - old_rx ) / interval )
-    tx,txu = bytestoh( ( cur_tx - old_tx ) / interval )
-    old_rx,old_tx,old_time = cur_rx,cur_tx,cur_time
+    if tonumber(interval) > 0 then -- porsia
+        rx,rxu = bytestoh( ( cur_rx - old_rx ) / interval )
+        tx,txu = bytestoh( ( cur_tx - old_tx ) / interval )
+        old_rx,old_tx,old_time = cur_rx,cur_tx,cur_time
+    end
     return iface..'<span color="white">↓</span>'..string.format("%03d%2s",rx,rxu)..'<span color="white">↑</span>'..string.format("%03d%2s",tx,txu)
 end
 --  imagebox
