@@ -67,7 +67,7 @@ mailurl  = 'https://mail.google.com/a/intranet.uoc.edu/feed/atom/unread'
 function check_gmail()
     local feed = fread(confdir..mailadd)
     if not feed or feed == '' then
-         return nil
+         return ''
     end
     if not count then
         count = 0
@@ -93,7 +93,7 @@ function check_gmail()
     if tonumber(lcount) > 0 then
         return '<span color="red">(<b>'..lcount..'</b>)</span>'
     else
-        return nil
+        return ''
     end
 end
 --  lanza un wget en background para bajar el feed de gmail.
@@ -133,7 +133,7 @@ function batInfo(widget)
     local cur = fread("/sys/class/power_supply/BAT0/charge_now")
     local cap = fread("/sys/class/power_supply/BAT0/charge_full")
     local sta = fread("/sys/class/power_supply/BAT0/status")
-    if not cur or not cap or not sta then
+    if not cur or not cap or not sta or tonumber(cap) <= 0 then
         widget.text = 'ERR'
         return
     end
@@ -284,6 +284,9 @@ function activeram()
         for key, value in string.gmatch(line, "(%w+):\ +(%d+).+") do
             if key == "MemTotal" then
                 total = tonumber(value)
+                if total <= 0 then --wtf
+                    return ''
+                end
             elseif key == "MemFree" then
                 free = tonumber(value)
             elseif key == "Buffers" then
@@ -355,10 +358,10 @@ function activeswap()
     for line in io.lines('/proc/meminfo') do
         for key, value in string.gmatch(line, "(%w+):\ +(%d+).+") do
             if key == "SwapTotal" then
-                if tonumber(value) == 0 then
-                    return nil -- No hay Swap!
-                end
                 total = tonumber(value)
+                if total == 0 then
+                    return '' -- No hay Swap!
+                end
             elseif key == "SwapFree" then
                 free = tonumber(value)
             end
@@ -555,7 +558,7 @@ function net_info()
     if file then
         iface = file:match('(%w+)%s+00000000%s+%w+%s+0003%s+')
         if not iface or iface == '' then
-            return nil --'<span color="red">NO</span>' -- "No Def GW"
+            return '' --'<span color="red">NO</span>' -- "No Def GW"
         end
     else
         return "Err: /proc/net/route."
@@ -607,7 +610,7 @@ netwidget.mouse_leave = function() naughty.destroy(pop) end
 --}}}
 --{{{    Load (magebox+textbox)
 --------------------------------------------------------------------------------
---  Devuelve el load average 
+--  Devuelve el load average
 function avg_load()
     local n = fread('/proc/loadavg')
     local pos = n:find(' ', n:find(' ', n:find(' ')+1)+1)
@@ -652,7 +655,7 @@ function get_vol()
             return txt:match('%[(%d+%%)%]')
         end
     else
-        return nil
+        return ''
     end
 end
 --  imagebox
@@ -721,6 +724,7 @@ for s = 1, screen.count() do
                            , net_ico
                            , netwidget
                            }
-        statusbar[s].screen = s
+    -- La asigno.
+    statusbar[s].screen = s
 end
 --}}}
