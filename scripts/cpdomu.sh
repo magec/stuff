@@ -2,6 +2,7 @@
 #set -x
 #set -e
 #{{{ Muchos colores.
+lila() { echo -ne "\e[35m$1\e[m"; }
 azul() { echo -ne "\e[34m$1\e[m"; }
 amar() { echo -ne "\e[33m$1\e[m"; }
 verd() { echo -ne "\e[32m$1\e[m"; }
@@ -37,7 +38,7 @@ check() { #{{{ Chequeo local.
         exit 1
     fi
     DOMU=$(egrep -i '^name *= *' $1 | cut -d '=' -f2 | sed -e s/[^0-z\.]//g)
-    test -z $DOMU && error "El domu no tiene nombre." || echo "+ El nombre del domu es $DOMU"
+    test -z "$DOMU" && error "El domu no tiene nombre." || echo "+ El nombre del domu es $DOMU"
     if [ -f `which xm` ]; then
         if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
     fi
@@ -107,6 +108,20 @@ rmdir /mnt/_$DISK && echo "+ Eliminando /mnt/_$DISK (remoto)." || exit 1
 EOF
     test "$?" == "0" && amar "#\n#\tOK!\n#\n" || error "Al desmontar/eliminar punto de montaje remoto."
 } #}}}
+
+create_disk_full() { #{{{ Crear disco entero en el remoto.
+    echo $1
+    echo $2
+    echo $3
+    echo $4
+    OFFSET=$(( $(fdisk -lu $1 2>&1 | sed -n "s:^$1. \+\([0-9]\+\).*83 \+Linux$:\1:p") * 512 ))
+    test -z "$OFFSET" && error "No hay offset."
+#dd if=/dev/null of=test.xm bs=1 count=1 seek=10G
+#dd if=/opt/xen/domains/cannes.disk.xm of=test.xm bs=32256 count=1
+
+
+} #}}}
+
 do_stuff() { #{{{ Bucle principal.
     ARRAY=( $(egrep -io '/[0-z.\/-]+' $1) )
     blan "#\n#\tFicheros en $1\n#\n\n"
@@ -118,6 +133,11 @@ do_stuff() { #{{{ Bucle principal.
             echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; azul "\t$OUT\n\n"
             if [ ! -z $3 ] ; then
                 create_swap $FILE $2 $(ls -l $FILE | awk '{print $5}')
+            fi
+        elif [ `echo "$OUT" | egrep -qi 'x86 boot sector'; echo $?` = 0 ]; then
+            echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; lila "\t$OUT\n\n"
+            if [ ! -z $3 ] ; then
+                create_disk_full $FILE $2 $(ls -l $FILE | awk '{print $5}')
             fi
         elif [ `echo "$OUT" | egrep -qi 'ext[2-4]|reiser'; echo $?` = 0 ]; then
             echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; amar "\t$OUT\n\n"
