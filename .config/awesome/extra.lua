@@ -578,6 +578,8 @@ function net_info()
         rx,rxu = bytestoh( ( cur_rx - old_rx ) / interval )
         tx,txu = bytestoh( ( cur_tx - old_tx ) / interval )
         old_rx,old_tx,old_time = cur_rx,cur_tx,cur_time
+    else
+        rx,tx,rxu,txu = "0","0","B","B"
     end
     return iface..'<span color="white">↓</span>'..string.format("%03d%2s",rx,rxu)..'<span color="white">↑</span>'..string.format("%03d%2s",tx,txu)
 end

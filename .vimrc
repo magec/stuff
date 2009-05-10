@@ -45,7 +45,7 @@ if has("autocmd")
     "Volver a 'tabear' al leer buffer.
     autocmd BufRead * retab
     "Mapeos a F6 para compilar.
-    autocmd FileType sh       map <F6> :!sh & %<CR>
+    autocmd FileType sh       map <F6> :!sh %<CR>
     autocmd FileType php      map <F6> :!php & %<CR>
     autocmd FileType python   map <F6> :!python %<CR>
     autocmd FileType perl     map <F6> :!perl %<CR>
