@@ -43,12 +43,12 @@ check() { #{{{ Chequeo local.
     fi
     DOMU=$(egrep -i '^name *= *' $1 | cut -d '=' -f2 | sed -e s/[^0-z\.]//g)
     test -z "$DOMU" && error "El domu no tiene nombre." || echo "+ El nombre del domu es $DOMU"
-    if [ -f `which xm` ]; then
-        if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
-    fi
-    if [ -f `which xm-ha` ]; then
-        if [ `xm-ha list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm-ha list' reporta que $DOMU está corriendo." ; fi
-    fi
+   # if [ -f `which xm` ]; then
+   #     if [ `xm list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm list' reporta que $DOMU está corriendo." ; fi
+   # fi
+   # if [ -f `which xm-ha` ]; then
+   #     if [ `xm-ha list | egrep -qi $DOMU ; echo $?` = 0 ] ; then error "'xm-ha list' reporta que $DOMU está corriendo." ; fi
+   # fi
 } #}}}
 create_swap() { #{{{ Crear swap en el remoto.
     azul "#\n#\tCreando swap $FILE de $SIZE en $2\n#\n"
@@ -174,16 +174,20 @@ else
 fi
 EOF
     elif [ ${SFLINE[3]} == 83 ] ; then
-        TIPO=$(file -bs $DEVICE | egrep -o 'ext[2-4]|reiser|^data$')
+        TIPO=$(file -bs $DEVICE | egrep -io 'ext[2-4]|reiserfs|^data$')
         echo "+ El filesystem local $DEVICE de $1 es $TIPO"
         ssh -T 2>/dev/null root@$2 <<EOF
 RDEV="/dev/mapper/\$(kpartx -l $1 2>&1 | sed -n "s:^\(.*\) \: 0 ${SFLINE[2]} /dev/loop[0-9]\+ ${SFLINE[1]}$:\1:p")"
 test -b \$RDEV && echo "+ OK, \$RDEV es un dispositivo de bloque." || echo "+ \$RDEV no existe o no es un dispositivo de bloque!"
-RTIPO=\$(file -bs \$RDEV | egrep -o 'ext[2-4]|reiser|^data$')
+RTIPO=\$(file -bs \$RDEV | egrep -io 'ext[2-4]|reiserfs|^data$')
 test \$RTIPO && echo "+ La partición remota \$RDEV de $1 es de tipo \$RTIPO"
 if [ \$RTIPO == "data" ] ; then
     echo "+ Se va a formatear \$RDEV en $TIPO"
-    mkfs.$TIPO -F \$RDEV >/dev/null 2>&1 && echo "+ Filesystem $TIPO creado en $1." || { echo "+ Error creando filesystem $TIPO en $1"; exit 1; }
+    if [ $TIPO == "ReiserFS" ] ; then
+        mkreiserfs -fq \$RDEV >/dev/null 2>&1 && echo "+ Filesystem $TIPO creado en $1." || { echo "+ Error creando filesystem $TIPO en $1"; exit 1; }
+    else
+        mkfs.$TIPO -F \$RDEV >/dev/null 2>&1 && echo "+ Filesystem $TIPO creado en $1." || { echo "+ Error creando filesystem $TIPO en $1"; exit 1; }
+    fi
 else
     echo "+ \$RDEV ya tiene un filesystem \$RTIPO, no se formateará."
 fi
@@ -224,7 +228,7 @@ kpartx -d $1 >/dev/null 2>&1 && echo "+ Mapeos de $1 (remoto) eliminados." || { 
 EOF
 } #}}}
 do_stuff() { #{{{ Bucle principal.
-    ARRAY=( $(egrep -io '/[0-z.\/-]+' $1) )
+    ARRAY=( $(egrep -io '/[0-z.\/-\_]+' $1) )
     blan "#\n#\tFicheros en $1\n#\n\n"
     for FILE in ${ARRAY[@]}; do
         test -f $FILE || continue
@@ -240,10 +244,10 @@ do_stuff() { #{{{ Bucle principal.
             if [ ! -z $3 ] ; then
                 create_disk_full $FILE $2 $(ls -l $FILE | awk '{print $5}')
             fi
-        elif [ `echo "$OUT" | egrep -qi 'ext[2-4]|reiser'; echo $?` = 0 ]; then
+        elif [ `echo "$OUT" | egrep -qi 'ext[2-4]|reiserfs'; echo $?` = 0 ]; then
             echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; amar "\t$OUT\n\n"
             if [ ! -z $3 ] ; then
-                create_disk $FILE $2 $(ls -l $FILE | awk '{print $5}') $(file -b $FILE | egrep -o 'ext[2-4]|reiser')
+                create_disk $FILE $2 $(ls -l $FILE | awk '{print $5}') $(file -b $FILE | egrep -io 'ext[2-4]|reiserfs')
             fi
         elif [ `echo "$OUT" | egrep -qi 'image|zip' ; echo $?` = 0 ]; then
             echo "Nombre: $FILE"; echo -ne "Tamaño: $SIZE\nTipo: "; verd "\t$OUT\n\n"
