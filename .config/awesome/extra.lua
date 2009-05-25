@@ -50,11 +50,61 @@ function bytestoh(bytes)
     local tUnits={"KB","MB","GB","TB","PB"} -- MUST be enough. :D
     local v,u
     for k=table.getn(tUnits),1,-1 do
-        if math.mod(bytes,1024^k)~=bytes then v=bytes/(1024^k); u=tUnits[k] break end
+        if math.fmod(bytes,1024^k) ~= bytes then v=bytes/(1024^k); u=tUnits[k] break end
     end
     return v or bytes,u or "B"
 end
---
+-- Crea, muestra y esconde clientes flotantes
+dropdown = {}
+function dropdown_toggle(prog)
+    screen = mouse.screen
+    if not dropdown[prog] then
+        -- Create table
+        dropdown[prog] = {}
+        -- Add unmanage hook for dropdown programs
+        awful.hooks.unmanage.register(function (c)
+            for scr, cl in pairs(dropdown[prog]) do
+                if cl == c then
+                    dropdown[prog][scr] = nil
+                end
+            end
+        end)
+    end
+    if not dropdown[prog][screen] then
+        spawnw = function (c)
+            -- Store client
+            dropdown[prog][screen] = c
+            -- Float client
+            awful.client.floating.set(c, true)
+            -- Mark terminal as ontop
+            c.ontop = true
+            c.above = true
+            -- Focus and raise client
+            c:raise()
+            client.focus = c
+            -- Remove hook
+            awful.hooks.manage.unregister(spawnw)
+        end
+        -- Add hook
+        awful.hooks.manage.register(spawnw)
+        -- Spawn program
+        awful.util.spawn(prog)
+    else
+        -- Get client
+        c = dropdown[prog][screen]
+        -- Focus and raise if not hidden
+        if c.hide then
+            c.hide = false
+            c:raise()
+            client.focus = c
+        -- solo lo esconderemos si ya está en nuestro tag
+        elseif c:tags()[1] ==  awful.tag.selected(screen) then
+            c.hide = true
+        end
+        -- Switch the client to the current workspace
+        awful.client.movetotag(awful.tag.selected(screen), c)
+    end
+end
 --}}}
 --{{{    GMail (imagebox+textbox)
 --------------------------------------------------------------------------------
@@ -129,12 +179,12 @@ mailwidget:buttons({
 --}}}
 --{{{    Bateria (texto)
 --------------------------------------------------------------------------------
-function batInfo(widget)
+function bat_info()
     local cur = fread("/sys/class/power_supply/BAT0/charge_now")
     local cap = fread("/sys/class/power_supply/BAT0/charge_full")
     local sta = fread("/sys/class/power_supply/BAT0/status")
     if not cur or not cap or not sta or tonumber(cap) <= 0 then
-        widget.text = 'ERR'
+        batterywidget.text = 'ERR'
         return
     end
     local battery = math.floor(cur * 100 / cap)
@@ -156,7 +206,7 @@ function batInfo(widget)
         dir = "="
         battery = "A/C~"
     end
-    widget.text = battery..dir
+    batterywidget.text = battery..dir
 end
 battery = io.open("/sys/class/power_supply/BAT0/charge_now")
 if battery then
@@ -166,7 +216,7 @@ batterywidget = widget({ type  = "textbox"
                        , name  = "batterywidget"
                        , align = "right"
                        })
-batInfo(batterywidget)
+batterywidget.text = bat_info()
 batterywidget.mouse_enter = function()
 naughty.destroy(pop)
 local text = fread("/proc/acpi/battery/BAT0/info")
@@ -596,7 +646,7 @@ netwidget.text = net_info()
 --  mouse_enter
 netwidget.mouse_enter = function()
     naughty.destroy(pop)
-    local listen = pread("netstat -patun | awk '/ESTABLISHED/{ if ($4 !~ /127.0.0.1|localhost/) print  \"(\"$7\")\t\"$5}'")
+    local listen = pread("netstat -patun 2>&1 | awk '/ESTABLISHED/{ if ($4 !~ /127.0.0.1|localhost/) print  \"(\"$7\")\t\"$5}'")
     pop = naughty.notify({ title      = '<span color="white">Established</span>\n'
                          , text       = escape(listen)
                          , icon       = imgpath..'net-wired.png'

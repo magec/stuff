@@ -246,6 +246,7 @@ globalkeys = awful.util.table.join(
                   awful.util.getdir("cache") .. "/history_eval")
               end),
 --  Aquí enchufo mis teclas
+    awful.key({ modkey,           }, "#49", function () dropdown_toggle('urxvtc') end), -- tecla º
     awful.key({ modkey, "Control" }, "w", function () awful.util.spawn(setrndwall) end),
     awful.key({ modkey, "Control" }, "q", function () awful.util.spawn(setwall) end),
     awful.key({ modkey, "Control" }, "t", function () awful.util.spawn('thunar') end),
@@ -445,15 +446,16 @@ awful.hooks.arrange.register(function (screen)
     end
 end)
 
---  Hook cada 2 segundos
-awful.hooks.timer.register(2, function ()
+--  Hook cada segundo
+awful.hooks.timer.register(1, function ()
     cpuwidget.text = cpu_info()
     loadwidget.text = avg_load()
     netwidget.text = net_info()
+    mytextbox.text = os.date(" %a, %d %b %Y %H:%M:%S ")
 end)
 
--- Hook called every 10 sec
-awful.hooks.timer.register(10, function ()
+-- Hook called every 5 sec
+awful.hooks.timer.register(5, function ()
     volwidget.text = get_vol()
     memwidget.text = activeram()
     swpwidget.text = activeswap()
@@ -462,17 +464,14 @@ end)
 
 --  Hook cada 30 segundos
 awful.hooks.timer.register(30, function ()
-    if batterywidget then batInfo(batterywidget) end
+    if batterywidget then batterywidget.text = bat_info() end
     mailwidget.text = check_gmail()
 end)
 
 -- Hook called every minute
 awful.hooks.timer.register(60, function ()
-    mytextbox.text = os.date(" %a %b %d, %H:%M ")
     getMail()
     fswidget.text = fs_info()
 end)
-mytextbox.text = os.date(" %a %b %d, %H:%M ")
 
--- porsia
 -- }}}
