@@ -47,7 +47,7 @@ function createIco(widget,file,click)
 end
 -- Converts bytes to human-readable units, returns value (number) and unit (string)
 function bytestoh(bytes)
-    local tUnits={"KB","MB","GB","TB","PB"} -- MUST be enough. :D
+    local tUnits={"K","M","G","T","P"} -- MUST be enough. :D
     local v,u
     for k=table.getn(tUnits),1,-1 do
         if math.fmod(bytes,1024^k) ~= bytes then v=bytes/(1024^k); u=tUnits[k] break end
@@ -631,7 +631,7 @@ function net_info()
     else
         rx,tx,rxu,txu = "0","0","B","B"
     end
-    return iface..'<span color="white">↓</span>'..string.format("%03d%2s",rx,rxu)..'<span color="white">↑</span>'..string.format("%03d%2s",tx,txu)
+    return iface..'<span color="white">↓</span>'..string.format("%04d%2s",rx,rxu)..'<span color="white">↑</span>'..string.format("%04d%2s",tx,txu)
 end
 --  imagebox
 net_ico = widget({ type = "imagebox", align = "right" })
