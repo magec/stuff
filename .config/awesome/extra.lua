@@ -149,7 +149,7 @@ end
 --  lanza un wget en background para bajar el feed de gmail.
 function getMail()
     if confdir and mailadd and mailpass and mailurl then
-        local cmd = 'wget '..mailurl..' -qO '..confdir..mailadd..' --http-user='..mailadd..' --http-passwd='..mailpass
+        local cmd = 'wget '..mailurl..' -qO '..confdir..mailadd..' --http-user='..mailadd..' --http-passwd='..mailpass..'&'
         os.execute(escape(cmd))
     end
 end
