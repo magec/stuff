@@ -184,8 +184,7 @@ function bat_info()
     local cap = fread("/sys/class/power_supply/BAT0/charge_full")
     local sta = fread("/sys/class/power_supply/BAT0/status")
     if not cur or not cap or not sta or tonumber(cap) <= 0 then
-        batterywidget.text = 'ERR'
-        return
+        return 'ERR'
     end
     local battery = math.floor(cur * 100 / cap)
     if sta:match("Charging") then
@@ -206,7 +205,7 @@ function bat_info()
         dir = "="
         battery = "A/C~"
     end
-    batterywidget.text = battery..dir
+    return battery..dir
 end
 battery = io.open("/sys/class/power_supply/BAT0/charge_now")
 if battery then
@@ -218,9 +217,9 @@ batterywidget = widget({ type  = "textbox"
                        })
 batterywidget.text = bat_info()
 batterywidget.mouse_enter = function()
-naughty.destroy(pop)
-local text = fread("/proc/acpi/battery/BAT0/info")
-pop = naughty.notify({ title  = '<span color="white">BAT0/info</span>\n'
+    naughty.destroy(pop)
+    local text = fread("/proc/acpi/battery/BAT0/info")
+    pop = naughty.notify({ title  = '<span color="white">BAT0/info</span>\n'
                      , text       = escape(text)
                      , icon       = imgpath..'swp.png'
                      , icon_size  = 32
@@ -699,7 +698,7 @@ loadwidget.mouse_leave = function() naughty.destroy(pop) end
 --------------------------------------------------------------------------------
 -- Devuelve el volumen "Master" en alsa.
 function get_vol()
-    local txt = pread('amixer get Master')
+    local txt = pread('amixer get PCM')
     if txt then
         if txt:match('%[off%]') then
             return 'Mute'
