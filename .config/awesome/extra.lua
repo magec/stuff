@@ -697,8 +697,14 @@ loadwidget.mouse_leave = function() naughty.destroy(pop) end
 --{{{    Volume (Custom) requiere alsa-utils
 --------------------------------------------------------------------------------
 -- Devuelve el volumen "Master" en alsa.
+
+amixline = pread('amixer | head -1')
+if amixline then
+    iface = amixline:match(".-%s%'(%w+)%',0")
+end
+
 function get_vol()
-    local txt = pread('amixer get PCM')
+    local txt = pread('amixer get '..iface)
     if txt then
         if txt:match('%[off%]') then
             return 'Mute'
@@ -722,11 +728,11 @@ volwidget.text = get_vol()
 --  buttons
 volwidget:buttons({
     button({ }, 4, function()
-        os.execute('amixer -c 0 set Master 3dB+');
+        os.execute('amixer -c 0 set '..iface..' 3dB+');
         volwidget.text = get_vol()
     end),
     button({ }, 5, function()
-        os.execute('amixer -c 0 set Master 3dB-');
+        os.execute('amixer -c 0 set '..iface..' 3dB-');
         volwidget.text = get_vol()
     end),
 })
