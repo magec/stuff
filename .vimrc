@@ -17,7 +17,7 @@ set encoding=utf-8              " Encoding
 set termencoding=utf-8          " ^
 if v:version >= 700
     set cursorline               "Resalta la línea del cursor
-    set listchars+=tab:»·,trail:·,extends:~,nbsp:.
+    set listchars+=tab:»·,trail:·,extends:~,nbsp:. " No me funciona >:(
 endif
 set mouse=a                     " selecciones no incluyen el nº de lineas.
 set tabstop=4                   " Tabs de 4 espacios
@@ -116,28 +116,30 @@ endif
 "{{{   Plugins
 "-------------------------------------------------------------------------------
 " MiniBufExplorer
-let g:miniBufExplMapWindowNavVim = 1
-let g:miniBufExplMapWindowNavArrows = 1
-let g:miniBufExplMapCTabSwitchBufs = 1
-let g:miniBufExplMapCTabSwitchWindows = 1
-let g:miniBufExplModSelTarget = 1
-let g:miniBufExplUseSingleClick = 1
-let g:miniBufExplTabWrap = 1
+let g:miniBufExplMapWindowNavVim      = 1 " Bindings extra:
+let g:miniBufExplMapWindowNavArrows   = 1 " ^
+let g:miniBufExplMapCTabSwitchBufs    = 1 " ^
+let g:miniBufExplMapCTabSwitchWindows = 1 " ^
+let g:miniBufExplModSelTarget         = 1 " ^
+let g:miniBufExplUseSingleClick       = 1 " Un solo click cambia buffer
+let g:miniBufExplTabWrap              = 1 " Tabs entre etiquetas
 " TagList
-let Tlist_Exit_OnlyWindow = 1     " exit if taglist is last window open
-let Tlist_Show_One_File = 1       " Only show tags for current buffer
-let Tlist_Enable_Fold_Column = 0  " no fold column (only showing one file)
-let Tlist_Use_Right_Window = 1
-let Tlist_Compact_Format = 1
-let Tlist_Show_Menu = 1
+let Tlist_Exit_OnlyWindow    = 1 " exit if taglist is last window open
+let Tlist_Show_One_File      = 1 " Only show tags for current buffer
+let Tlist_Enable_Fold_Column = 0 " no fold column (only showing one file)
+let Tlist_Use_Right_Window   = 1 " TagList en la derecha
+let Tlist_Compact_Format     = 1 " Modo compacto. No muestra nº de lineasi, etc...
+let Tlist_Show_Menu          = 1 " En GVim muestra un menu 'Tags'
 map <F4> :Tlist<CR>
-" NERDTree
-let NERDTreeMapActivateNode='<CR>'  " Enter abre nodos
-let NERDTreeShowHidden = 1
+" NERDTreeMapActivateNodee
+let NERDTreeMapActivateNode  = '<CR>'  " Enter abre nodos
 map <F3> :NERDTreeToggle<CR>
 "}}}
 "{{{   Bindings y Extras
 "-------------------------------------------------------------------------------
 " Ctrl-L quita highlights y redibuja la pantalla
-nnoremap <C-L> :nohls<CR><C-L>
+nnoremap <C-L> :nohls<CR>
+" Mapeo F1 a Escape
+map <F1> <Esc>
+imap <F1> <Esc> " No va
 "}}}
