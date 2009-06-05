@@ -9,9 +9,8 @@ require("naughty")
 -- Themes define colours, icons, and wallpapers
 -- The default is a dark theme
  theme_path = os.getenv("HOME").."/.config/awesome/themes/oscar.lua"
--- theme_path = "/usr/share/awesome/themes/default/theme.lua"
 -- Uncommment this for a lighter theme
--- theme_path = "/usr/share/awesome/themes/sky/theme"
+-- theme_path = "/usr/share/awesome/themes/sky/theme.lua"
 
 -- Actually load theme
 beautiful.init(theme_path)
@@ -87,14 +86,14 @@ for s = 1, screen.count() do
 end
 -- }}}
 
--- Create a systray
-mysystray = widget({ type = "systray", align = "right" })
-
 -- {{{ Wibox
 -- Create a textbox widget
 mytextbox = widget({ type = "textbox", align = "right" })
 -- Set the default text in textbox
-mytextbox.text = "<b><small> AWESOME_RELEASE </small></b>"
+mytextbox.text = "<b><small> " .. awesome.release .. " </small></b>"
+
+-- Create a systray
+mysystray = widget({ type = "systray", align = "right" })
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -137,7 +136,7 @@ mytasklist.buttons = awful.util.table.join(
 
 for s = 1, screen.count() do
     -- Create a promptbox for each screen
-    mypromptbox[s] = widget({ type = "textbox", align = "left" })
+    mypromptbox[s] = awful.widget.prompt({ align = "left" })
     -- Create an imagebox widget which will contains an icon indicating which layout we're using.
     -- We need one layoutbox per screen.
     mylayoutbox[s] = widget({ type = "imagebox", align = "left" })
@@ -147,20 +146,20 @@ for s = 1, screen.count() do
                            awful.button({ }, 4, function () awful.layout.inc(layouts, 1) end),
                            awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)))
     -- Create a taglist widget
-    mytaglist[s] = awful.widget.taglist.new(s, awful.widget.taglist.label.all, mytaglist.buttons)
+    mytaglist[s] = awful.widget.taglist(s, awful.widget.taglist.label.all, mytaglist.buttons)
 
     -- Create a tasklist widget
-    mytasklist[s] = awful.widget.tasklist.new(function(c)
-                                                  return awful.widget.tasklist.label.currenttags(c, s)
-                                              end, mytasklist.buttons)
+    mytasklist[s] = awful.widget.tasklist(function(c)
+                                              return awful.widget.tasklist.label.currenttags(c, s)
+                                          end, mytasklist.buttons)
 
     -- Create the wibox
-     mywibox[s] = wibox({ position     = "top",
-                         fg           = beautiful.fg_normal,
-                         bg           = beautiful.bg_normal,
-                         border_width = "1",
-                         border_color = beautiful.border_normal
-                         })
+    mywibox[s] = wibox({ position = "top"
+                       , fg = beautiful.fg_normal
+                       , bg = beautiful.bg_normal
+                       , border_color = beautiful.border_normal
+                       , border_width = 1 
+                       })
     -- Add widgets to the wibox - order matters
     mywibox[s].widgets = { mytaglist[s],
                            mytasklist[s],
@@ -174,10 +173,9 @@ end
 
 -- Barra de widgets
 loadfile(awful.util.getdir("config").."/extra.lua")()
-
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
---    awful.button({ }, 3, function () mymainmenu:toggle() end),
+    awful.button({ }, 3, function () mymainmenu:toggle() end),
     awful.button({ }, 4, awful.tag.viewnext),
     awful.button({ }, 5, awful.tag.viewprev)
 ))
@@ -199,7 +197,7 @@ globalkeys = awful.util.table.join(
             awful.client.focus.byidx(-1)
             if client.focus then client.focus:raise() end
         end),
---    awful.key({ modkey,           }, "w", function () mymainmenu:show(true)        end),
+    awful.key({ modkey,           }, "w", function () mymainmenu:show(true)        end),
 
     -- Layout manipulation
     awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1) end),
@@ -230,18 +228,12 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
 
     -- Prompt
-    awful.key({ modkey }, "F1",
-              function ()
-                  awful.prompt.run({ prompt = "Run: " },
-                  mypromptbox[mouse.screen],
-                  awful.util.spawn, awful.completion.shell,
-                  awful.util.getdir("cache") .. "/history")
-              end),
+    awful.key({ modkey },            "F1",     function () mypromptbox[mouse.screen]:run() end),
 
-    awful.key({ modkey }, "x",
+    awful.key({ modkey }, "F2",
               function ()
                   awful.prompt.run({ prompt = "Run Lua code: " },
-                  mypromptbox[mouse.screen],
+                  mypromptbox[mouse.screen].widget,
                   awful.util.eval, nil,
                   awful.util.getdir("cache") .. "/history_eval")
               end),
@@ -294,33 +286,34 @@ for s = 1, screen.count() do
 end
 
 for i = 1, keynumber do
-    table.foreach(awful.key({ modkey }, i,
+    globalkeys = awful.util.table.join(globalkeys,
+        awful.key({ modkey }, i,
                   function ()
                         local screen = mouse.screen
                         if tags[screen][i] then
                             awful.tag.viewonly(tags[screen][i])
                         end
-                  end), function(_, k) table.insert(globalkeys, k) end)
-    table.foreach(awful.key({ modkey, "Control" }, i,
+                  end),
+        awful.key({ modkey, "Control" }, i,
                   function ()
                       local screen = mouse.screen
                       if tags[screen][i] then
                           tags[screen][i].selected = not tags[screen][i].selected
                       end
-                  end), function(_, k) table.insert(globalkeys, k) end)
-    table.foreach(awful.key({ modkey, "Shift" }, i,
+                  end),
+        awful.key({ modkey, "Shift" }, i,
                   function ()
                       if client.focus and tags[client.focus.screen][i] then
                           awful.client.movetotag(tags[client.focus.screen][i])
                       end
-                  end), function(_, k) table.insert(globalkeys, k) end)
-    table.foreach(awful.key({ modkey, "Control", "Shift" }, i,
+                  end),
+        awful.key({ modkey, "Control", "Shift" }, i,
                   function ()
                       if client.focus and tags[client.focus.screen][i] then
                           awful.client.toggletag(tags[client.focus.screen][i])
                       end
-                  end), function(_, k) table.insert(globalkeys, k) end)
-    table.foreach(awful.key({ modkey, "Shift" }, "F" .. i,
+                  end),
+        awful.key({ modkey, "Shift" }, "F" .. i,
                   function ()
                       local screen = mouse.screen
                       if tags[screen][i] then
@@ -328,7 +321,7 @@ for i = 1, keynumber do
                               awful.client.movetotag(tags[screen][i], c)
                           end
                       end
-                   end), function(_, k) table.insert(globalkeys, k) end)
+                   end))
 end
 
 -- Set keys
@@ -396,9 +389,9 @@ awful.hooks.manage.register(function (c, startup)
     -- Check if the application should be floating.
     local cls = c.class
     local inst = c.instance
-    if floatapps[cls] then
+    if floatapps[cls] ~= nil then
         awful.client.floating.set(c, floatapps[cls])
-    elseif floatapps[inst] then
+    elseif floatapps[inst] ~= nil then
         awful.client.floating.set(c, floatapps[inst])
     end
 
@@ -473,5 +466,4 @@ awful.hooks.timer.register(60, function ()
     getMail()
     fswidget.text = fs_info()
 end)
-
 -- }}}
