@@ -8,8 +8,8 @@ require("naughty")
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
 -- The default is a dark theme
-theme_path = os.getenv("HOME").."/.config/awesome/themes/oscar"
--- theme_path = "/usr/share/awesome/themes/default/theme"
+ theme_path = os.getenv("HOME").."/.config/awesome/themes/oscar.lua"
+-- theme_path = "/usr/share/awesome/themes/default/theme.lua"
 -- Uncommment this for a lighter theme
 -- theme_path = "/usr/share/awesome/themes/sky/theme"
 
@@ -94,7 +94,7 @@ mysystray = widget({ type = "systray", align = "right" })
 -- Create a textbox widget
 mytextbox = widget({ type = "textbox", align = "right" })
 -- Set the default text in textbox
-mytextbox.text = "<b><small> " .. AWESOME_RELEASE .. " </small></b>"
+mytextbox.text = "<b><small> AWESOME_RELEASE </small></b>"
 
 -- Create a wibox for each screen and add it
 mywibox = {}
