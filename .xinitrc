@@ -13,5 +13,6 @@ test -f `which urxvtd`      && urxvtd -o -q -f &
 test -f `which parcellite`  && parcellite      &
 test -f `which wicd-client` && wicd-client     &
 test -f `which thunar`      && thunar --daemon &
+#test -f `which setxkbmap`   && setxkbmap es    &
 #   o-som
 exec awesome > $HOME/.awesome.err 2>&1

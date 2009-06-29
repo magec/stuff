@@ -1,10 +1,11 @@
 alias ls='ls --color=auto'
 alias vi='vim'
 alias grep='egrep --color'
+alias ssh='ssh -4'
 alias timor='ssh oprietop@192.168.139.14'
 alias wget='wget -U "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.10) Gecko/2009042810 GranParadiso/3.0.10" --execute robots=off'
 alias walk='snmpwalk -c uocpublic -v 1'
-alias rdesktop='rdesktop -0 -z -g1022x766 -uAdministrador -kes -a16'
+alias rdesktop='rdesktop -0 -z -g95% -uAdministrador -kes -a16'
 alias millenium='nc -vvvzw1 84.88.0.230 80 443 2000 4600'
 export PATH=$PATH:$HOME/scripts
 export EDITOR=vim
