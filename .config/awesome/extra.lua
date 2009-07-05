@@ -251,19 +251,21 @@ Lseparator.resize = false
 --------------------------------------------------------------------------------
 --  Devuelve estado de mpc
 function mpc_info()
-    local now = pread("mpc")
+    local now = escape(pread("mpc"))
     if now and now ~= '' then
-        song,state,time = now:match('^(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-)\nvolume')
+        song,state,time = now:match('^(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-%(%d+%%%))')
         if state == 'playing' then
-            if song and song ~= '' then
+            if song ~= '' and time ~= '' then
                 return '[Play]<span color="white"> "'..song..'"</span> '..time
             end
         elseif state == 'paused' then
-            if song and song ~= '' then
-                return '[Wait] '..escape(song)..' '..time
+            if song ~= '' and time ~= '' then
+                return '[Wait] '..song..' '..time
             end
         elseif now:match('^volume:') then
             return '[Stop] ZZzzz...'
+        elseif now:match('^Updating%sDB') then
+            return '[Wait] Updating Database...'
         else
             return '<span color="red">[DEAD]</span> :_('
         end
@@ -311,7 +313,7 @@ mpcwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = pread("mpc; echo ; mpc stats")
     pop = naughty.notify({ title     = '<span color="white">MPC Stats</span>\n'
-                         , text      = escape(text)
+                         , text      = text
                          , icon      = imgpath..'mpd.png'
                          , icon_size = 28
                          , timeout   = 0
@@ -386,7 +388,7 @@ memwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = pread("free")
     pop = naughty.notify({  title  = '<span color="white">Free</span>\n'
-                         , text       = escape(text)
+                         , text       = text
                          , icon       = imgpath..'mem.png'
                          , icon_size  = 32
                          , timeout    = 0
@@ -433,7 +435,7 @@ swpwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = fread("/proc/meminfo")
     pop = naughty.notify({  title  = '<span color="white">/proc/meminfo</span>\n'
-                         , text       = escape(text)
+                         , text       = text
                          , icon       = imgpath..'swp.png'
                          , icon_size  = 32
                          , timeout    = 0
@@ -527,7 +529,7 @@ cpuwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = pread("ps -eo %cpu,%mem,ruser,pid,comm --sort -%cpu | head -20")
     pop = naughty.notify({ title     = '<span color="white">Processes</span>\n'
-                         , text      = escape(text)
+                         , text      = text
                          , icon      = imgpath..'cpu.png'
                          , icon_size = 28
                          , timeout   = 0
@@ -582,7 +584,7 @@ fswidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = pread("df -ha")
     pop = naughty.notify({ title      = '<span color="white">Disk Usage</span>'
-                         , text       = escape(text..'\n')
+                         , text       = text..'\n'
                          , icon       = imgpath..'fs.png'
                          , icon_size  = 32
                          , timeout    = 0
@@ -646,7 +648,7 @@ netwidget.mouse_enter = function()
     naughty.destroy(pop)
     local listen = pread("netstat -patun 2>&1 | awk '/ESTABLISHED/{ if ($4 !~ /127.0.0.1|localhost/) print  \"(\"$7\")\t\"$5}'")
     pop = naughty.notify({ title      = '<span color="white">Established</span>\n'
-                         , text       = escape(listen)
+                         , text       = listen
                          , icon       = imgpath..'net-wired.png'
                          , icon_size  = 32
                          , timeout    = 0
@@ -681,7 +683,7 @@ loadwidget.mouse_enter = function()
     naughty.destroy(pop)
     local text = pread("uptime; echo; who")
     pop = naughty.notify({ title  = '<span color="white">Uptime</span>\n'
-                         , text       = escape(text)
+                         , text       = text
                          , icon       = imgpath..'load.png'
                          , icon_size  = 32
                          , timeout    = 0
@@ -698,6 +700,7 @@ loadwidget.mouse_leave = function() naughty.destroy(pop) end
 -- Devuelve el volumen "Master" en alsa.
 
 amixline = pread('amixer | head -1')
+iface = "null"
 if amixline then
     iface = amixline:match(".-%s%'(%w+)%',0")
 end
@@ -747,7 +750,7 @@ for s = 1, screen.count() do
                          , bg = beautiful.bg_normal
                          , border_color = beautiful.border_normal
                          , height = 15
-                         , border_width = 1
+                         , border_width = 2
                          })
     -- Le enchufo los widgets
     statusbar[s].widgets = { vol_ico
