@@ -158,7 +158,7 @@ for s = 1, screen.count() do
                        , fg = beautiful.fg_normal
                        , bg = beautiful.bg_normal
                        , border_color = beautiful.border_normal
-                       , border_width = 1 
+                       , border_width = 1
                        })
     -- Add widgets to the wibox - order matters
     mywibox[s].widgets = { mytaglist[s],
@@ -228,7 +228,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
 
     -- Prompt
-    awful.key({ modkey },            "F1",     function () mypromptbox[mouse.screen]:run() end),
+    awful.key({ modkey }, "F1",     function () mypromptbox[mouse.screen]:run() end),
 
     awful.key({ modkey }, "F2",
               function ()
@@ -238,7 +238,8 @@ globalkeys = awful.util.table.join(
                   awful.util.getdir("cache") .. "/history_eval")
               end),
 --  Aquí enchufo mis teclas
-    awful.key({ modkey,           }, "#49", function () dropdown_toggle('urxvtc') end), -- tecla º
+    awful.key({ modkey,           }, "#49",  function () dropdown_toggle('urxvtc') end), -- tecla º
+    awful.key({ modkey,           }, "#107", function () dropdown_toggle('scrot -e gqview') end), -- tecla Print Screen
     awful.key({ modkey, "Control" }, "w", function () awful.util.spawn(setrndwall) end),
     awful.key({ modkey, "Control" }, "q", function () awful.util.spawn(setwall) end),
     awful.key({ modkey, "Control" }, "t", function () awful.util.spawn('thunar') end),
