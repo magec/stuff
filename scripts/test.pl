@@ -200,7 +200,7 @@ sub convert_bytes ($$){
 
 sub timeticks2HR() {
     my $seconds = ($_[0]/100);
-    return sprintf ("%.1d Days, %.2d:%.2d:%.2d", $seconds/86400, $seconds/3600%24, $seconds/60%60, $seconds%60) if $seconds or return 0; 
+    return sprintf ("%.1d Days, %.2d:%.2d:%.2d", $seconds/86400, $seconds/3600%24, $seconds/60%60, $seconds%60) if $seconds or return 0;
 }
 sub TrueSort() { # http://www.perlmonks.org/?node_id=483462
     my @list = @_;
@@ -220,7 +220,7 @@ sub AgrArr() { #Agrupa los puertos de un array de un chui
     my $cache=undef;
     my @array=&TrueSort(@_);
     for my $i (0..$#array) {
-        next if $array[$i] eq $array[$i+1]; #Nos cargamos los duplicados 
+        next if $array[$i] eq $array[$i+1]; #Nos cargamos los duplicados
         my $next = $1.($2+1) if $array[$i] =~ /(.+?)(\d+)$/g;
         if ( $next ne $array[$i+1] ) {
             push (@out, $cache.$array[$i]);
