@@ -60,6 +60,8 @@ if has('gui_running')
     set guioptions-=L                           " ^
     set guioptions-=r                           " ^
     set guioptions-=R                           " ^
+elseif (&term =~ 'xterm')
+    colorscheme zenburn     " Tema para xterm.
 elseif (&term =~ 'linux')
     colorscheme desert      " Tema para tty.
 else
