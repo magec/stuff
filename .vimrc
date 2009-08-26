@@ -16,8 +16,8 @@ set number                      " muetra nº de lineas
 set encoding=utf-8              " Encoding
 set termencoding=utf-8          " ^
 if v:version >= 700
-    set cursorline               "Resalta la línea del cursor
-    set listchars+=tab:»·,trail:·,extends:~,nbsp:. " No me funciona >:(
+    set cursorline               " Resalta la línea del cursor
+    set list listchars=tab:»-,eol:¶,trail:·,nbsp:¬  " Muestra chars 'no deseados'
 endif
 set mouse=a                     " selecciones no incluyen el nº de lineas.
 set tabstop=4                   " Tabs de 4 espacios
@@ -60,6 +60,9 @@ if has('gui_running')
     set guioptions-=L                           " ^
     set guioptions-=r                           " ^
     set guioptions-=R                           " ^
+    if has("autocmd")&& has("gui")
+        autocmd GUIEnter * set t_vb=            " Desactiva visualbell en GVim
+    endif
 elseif (&term =~ 'xterm')
     colorscheme zenburn     " Tema para xterm.
 elseif (&term =~ 'linux')

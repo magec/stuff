@@ -209,7 +209,7 @@ end
 battery = io.open("/sys/class/power_supply/BAT0/charge_now")
 if battery then
 bat_ico = widget({ type = "imagebox", align = "right" })
-createIco(bat_ico,'bat.png','urxvtc -e xterm')
+createIco(bat_ico, 'bat.png', terminal..' -e xterm')
 batterywidget = widget({ type  = "textbox"
                        , name  = "batterywidget"
                        , align = "right"
@@ -275,7 +275,7 @@ function mpc_info()
 end
 --  imagebox
 mpd_ico = widget({ type = "imagebox", align = "left" })
-createIco(mpd_ico,'mpd.png','urxvtc -e ncmpcpp')
+createIco(mpd_ico, 'mpd.png', terminal..' -e ncmpcpp')
 --  textbox
 mpcwidget = widget({ type = 'textbox'
                    ,name  = 'mpcwidget'
@@ -356,7 +356,7 @@ function activeram()
 end
 --  imagebox
 mem_ico = widget({ type = "imagebox", align = "right" })
-createIco(mem_ico,'mem.png','urxvtc -e htop')
+createIco(mem_ico,'mem.png', terminal..' -e htop')
 --  textbox
 memwidget = widget({ type = 'textbox'
                    , name = 'memwidget'
@@ -422,7 +422,7 @@ function activeswap()
 end
 --  imagebox
 swp_ico = widget({ type = "imagebox", align = "right" })
-createIco(swp_ico,'swp.png','urxvtc -e htop')
+createIco(swp_ico,'swp.png', terminal..' -e htop')
 --  textbox
 swpwidget = widget({ type = 'textbox'
                    , name = 'swpwidget'
@@ -501,7 +501,7 @@ function cpu_info()
 end
 --  imagebox
 cpu_ico = widget({ type = "imagebox", align = "right" })
-createIco(cpu_ico,'cpu.png','urxvtc -e htop')
+createIco(cpu_ico,'cpu.png', terminal..' -e htop')
 --  textbox
 cpuwidget = widget({ type = 'textbox'
                    , name = 'cpuwidget'
@@ -571,7 +571,7 @@ end
 
 --  imagebox
 fs_ico = widget({ type = "imagebox", align = "right" })
-createIco(fs_ico,'fs.png','urxvtc -e fdisk -l')
+createIco(fs_ico,'fs.png', terminal..' -e fdisk -l')
 --  textbox
 fswidget = widget({ type = 'textbox'
                   , name = 'fswidget'
@@ -635,7 +635,7 @@ function net_info()
 end
 --  imagebox
 net_ico = widget({ type = "imagebox", align = "right" })
-createIco(net_ico,'net-wired.png','urxvtc -e netstat -ltunpp')
+createIco(net_ico,'net-wired.png', terminal..' -e netstat -ltunpp')
 --  textbox
 netwidget = widget({ type = 'textbox'
                    , name = 'netwidget'
@@ -670,7 +670,7 @@ function avg_load()
 end
 --  imagebox
 load_ico = widget({ type = "imagebox", align = "right" })
-createIco(load_ico,'load.png','urxvtc -e htop')
+createIco(load_ico,'load.png', terminal..' -e htop')
 --  textbox
 loadwidget = widget({ type = 'textbox'
                     , name = 'loadwidget'
@@ -719,7 +719,7 @@ function get_vol()
 end
 --  imagebox
 vol_ico = widget({ type = "imagebox", align = "left" })
-createIco(vol_ico,'vol.png','urxvtc -e alsamixer')
+createIco(vol_ico,'vol.png', terminal..' -e alsamixer')
 --  textbox
 volwidget = widget({ type = 'textbox'
                       , name = 'volwidget'

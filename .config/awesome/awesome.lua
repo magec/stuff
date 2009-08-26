@@ -238,19 +238,19 @@ globalkeys = awful.util.table.join(
                   awful.util.getdir("cache") .. "/history_eval")
               end),
 --  Aquí enchufo mis teclas
-    awful.key({ modkey,           }, "#49",  function () dropdown_toggle('urxvtc') end), -- tecla º
+    awful.key({ modkey,           }, "#49",  function () dropdown_toggle(terminal) end), -- tecla º
     awful.key({ modkey,           }, "#107", function () dropdown_toggle('scrot -e gqview') end), -- tecla Print Screen
     awful.key({ modkey, "Control" }, "w", function () awful.util.spawn(setrndwall) end),
     awful.key({ modkey, "Control" }, "q", function () awful.util.spawn(setwall) end),
     awful.key({ modkey, "Control" }, "t", function () awful.util.spawn('thunar') end),
     awful.key({ modkey, "Control" }, "p", function () awful.util.spawn('pidgin') end),
-    awful.key({ modkey, "Control" }, "c", function () awful.util.spawn('urxvtc -e mc') end),
+    awful.key({ modkey, "Control" }, "c", function () awful.util.spawn(terminal..' -e mc') end),
     awful.key({ modkey, "Control" }, "f", function () awful.util.spawn('firefox') end),
     awful.key({ modkey, "Control" }, "g", function () awful.util.spawn('gvim') end),
     awful.key({ modkey, "Control" }, "a", function () awful.util.spawn('ruc_web_resolucio.sh') end),
     awful.key({ modkey, "Control" }, "s", function () awful.util.spawn('sonata') end),
     awful.key({ modkey, "Control" }, "x", function () awful.util.spawn('slock') end),
-    awful.key({ modkey, "Control" }, "v", function () awful.util.spawn('urxvtc -e ncmpcpp') end),
+    awful.key({ modkey, "Control" }, "v", function () awful.util.spawn(terminal..' -e ncmpcpp') end),
     awful.key({ modkey, "Control" }, "0", function () awful.util.spawn('xrandr -o left') end),
     awful.key({ modkey, "Control" }, "'", function () awful.util.spawn('xrandr -o normal') end),
     awful.key({ modkey, "Control" }, "b", function () awful.util.spawn('mpc play') end),
