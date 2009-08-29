@@ -50,6 +50,7 @@ set statusline+=%-14.(%l,%c%V%)\ %<%P        " offset
 "}}}
 "{{{   Temas
 "-------------------------------------------------------------------------------
+set t_Co=256                                    " porsia
 if has('gui_running')
     set cursorline
     colorscheme zenburn                         " Tema para gVim
@@ -65,11 +66,10 @@ if has('gui_running')
     endif
 elseif (&term =~ 'xterm')
     colorscheme zenburn     " Tema para xterm.
-elseif (&term =~ 'linux')
-    colorscheme desert      " Tema para tty.
+elseif (&term =~ 'rxvt-256color')
+    colorscheme inkpot      " Tema para rxvt-unicode-256color.
 else
-    set t_Co=256
-    colorscheme inkpot      " Tema para el resto
+    colorscheme desert      " Tema para el resto
 endif
 "}}}
 "{{{   Eventos
