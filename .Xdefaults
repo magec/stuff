@@ -15,7 +15,7 @@ Xft.rgba:      rgb
 !}}}
 !{{{    urxvt: Misc & Matcher
 !-------------------------------------------------------------------------------
-urxvt*termName:          rxvt-unicode
+urxvt*termName:          rxvt-256color
 urxvt*imLocale:          en_EN.UTF-8
 urxvt*loginShell:        true
 urxvt*cutchars:          "()*,<>[]{}|'
@@ -111,6 +111,7 @@ urxvt*color15: #EEEEEE
 !}}}
 !{{{    xterm (Zenburn)
 !-------------------------------------------------------------------------------
+xterm*termName:           xterm
 xterm*internalBorder:     0
 xterm*loginShell:         true
 xterm*scrollBar:          false
