@@ -245,7 +245,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "t", function () awful.util.spawn('thunar') end),
     awful.key({ modkey, "Control" }, "p", function () awful.util.spawn('pidgin') end),
     awful.key({ modkey, "Control" }, "c", function () awful.util.spawn(terminal..' -e mc') end),
-    awful.key({ modkey, "Control" }, "f", function () awful.util.spawn('firefox') end),
+    awful.key({ modkey, "Control" }, "f", function () awful.util.spawn('opera') end),
     awful.key({ modkey, "Control" }, "g", function () awful.util.spawn('gvim') end),
     awful.key({ modkey, "Control" }, "a", function () awful.util.spawn('ruc_web_resolucio.sh') end),
     awful.key({ modkey, "Control" }, "s", function () awful.util.spawn('sonata') end),
