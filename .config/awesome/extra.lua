@@ -154,7 +154,7 @@ function getMail()
 end
 --  imagebox
 mail_ico = widget({ type = "imagebox", align = "right" })
-createIco(mail_ico,'mail.png','firefox "'..mailurl..'"&')
+createIco(mail_ico,'mail.png','opera "'..mailurl..'"&')
 --  textbox
 mailwidget = widget({ type  = "textbox"
                     , name  = "mailwidget"
@@ -172,7 +172,7 @@ mailwidget.mouse_leave = function() naughty.destroy(pop) end
 mailwidget:buttons({
     button({ }, 1, function ()
         getMail()
-        os.execute('firefox "'..mailurl..'"&')
+        os.execute('opera "'..mailurl..'"&')
     end),
 })
 --}}}
