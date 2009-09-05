@@ -1,6 +1,6 @@
 #!/bin/sh
-#   I log
-errorlog="~/.xsession-errors"
+# I log
+errorlog="~/.xsession.err"
 if ( cp /dev/null "$errorlog" 2> /dev/null )
 then
     chmod 600 "$errorlog"
@@ -9,11 +9,11 @@ then
 fi
 # I merge
 xrdb -merge -load ~/.Xdefaults &
-#   nasTests
+# nasTests
 test -f `which xcompmgr`    && xcompmgr        &
 test -f `which urxvtd`      && urxvtd -o -q -f &
 test -f `which parcellite`  && parcellite      &
 test -f `which wicd-client` && wicd-client     &
 test -f `which thunar`      && thunar --daemon &
-#   o-som
+# o-som
 exec awesome > ~/.awesome.err 2>&1
