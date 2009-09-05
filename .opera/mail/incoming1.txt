@@ -3,7 +3,7 @@
 ; This file is stored in UTF-8 encoding
 
 [Feeds]
-Next Feed ID=3
+Next Feed ID=5
 
 [Feed 1]
 Name=Genbeta
@@ -20,5 +20,17 @@ Subscribed=1
 [Feed 3]
 Name=Gmail - Label 'unread' for oprietop@intranet.uoc.edu
 URL=https://mail.google.com/a/intranet.uoc.edu/feed/atom/unread
+Update Frequency=3600
+Subscribed=1
+
+[Feed 4]
+Name=Kotaku: Top
+URL=http://kotaku.com/tag/top/index.xml
+Update Frequency=3600
+Subscribed=1
+
+[Feed 5]
+Name=Novedades en ESPALPSP.com
+URL=http://espalpsp.com/rss.php
 Update Frequency=3600
 Subscribed=1
