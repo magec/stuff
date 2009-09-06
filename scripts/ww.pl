@@ -55,7 +55,7 @@ sub GetSnmp() {
 	return @result;
 }
 
-my @out = &GetSnmp ( $ARGV[0], qw( uocpublic .1.3.6.1.2.1.17.7.1.4.3.1.1 .1.3.6.1.2.1.17.7.1.4.5.1.1 ifAlias ifName .1.3.6.1.2.1.17.1.4.1.2 ) );
+my @out = &GetSnmp ( $ARGV[0], qw( public .1.3.6.1.2.1.17.7.1.4.3.1.1 .1.3.6.1.2.1.17.7.1.4.5.1.1 ifAlias ifName .1.3.6.1.2.1.17.1.4.1.2 ) );
 
 sub slice() {
 	my %TmpArray=();

@@ -90,7 +90,7 @@ my $DEBUG = 1;
 
 my $host      = $ENV{host}      || undef;
 my $port      = $ENV{port}      || 161;
-my $community = $ENV{community} || "uocpublic";
+my $community = $ENV{community} || "public";
 my $iface     = $ENV{interface} || undef;
 # grupo 
 my $group      = $ENV{group}     || "Network";

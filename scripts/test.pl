@@ -60,7 +60,7 @@ sub SnmpSession() {
     my ($machine, $community) = @_;
 
     $machine   = 'localhost' unless $machine;
-    $community = 'uocpublic' unless $community;
+    $community = 'public' unless $community;
 
     my $session = new SNMP::Session(
         DestHost    => $machine,
@@ -246,7 +246,7 @@ sub getPOSTvalues {
 }
 
 sub enterasys() {
-    %hash = &parse( &bulk ( $ARGV[0], 'uocpublic',
+    %hash = &parse( &bulk ( $ARGV[0], 'public',
                                 $oids{'ifIndex'},
                                 $oids{'ifName'},
                                 $oids{'ifAlias'},
@@ -272,7 +272,7 @@ sub enterasys() {
 }
 
 sub cisco() {
-    %hash = &parse( &bulk ( $ARGV[0], 'uocpublic',
+    %hash = &parse( &bulk ( $ARGV[0], 'public',
                                 $oids{'ifIndex'},
                                 $oids{'ifName'},
                                 $oids{'ifAlias'},
@@ -398,7 +398,7 @@ my %FORM=&getPOSTvalues;
 if ($FORM{'input'} =~ /^[\w-]+(?:|(\.[\w-]+)+)$/ ) {
     $ARGV[0] = $FORM{'input'};
     print "<H2>$FORM{'input'}</H2>";
-    my $sysObjectID = &get($FORM{'input'},'uocpublic','.1.3.6.1.2.1.1.2.0');
+    my $sysObjectID = &get($FORM{'input'},'public','.1.3.6.1.2.1.1.2.0');
     if ($sysObjectID =~ /\.1\.3\.6\.1\.4\.1\.5624/) {
         &enterasys;
     } elsif ($sysObjectID =~ /\.1\.3\.6\.1\.4\.1\.9/) {

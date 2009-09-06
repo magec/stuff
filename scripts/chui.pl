@@ -30,7 +30,7 @@ my %oids =(
 	ifOutOctets				=>	'.1.3.6.1.2.1.2.2.1.16',
 );
 
-&backupSNMP qw/192.168.246.26 uocpublic/;
+&backupSNMP qw/192.168.246.26 public/;
 
 sub backupSNMP {
 	my ($switch, $community) = @_;
