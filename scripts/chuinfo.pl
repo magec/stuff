@@ -8,6 +8,7 @@ use Data::Dumper;
 
 # No quiero escribir esto cada vez.
 my $table = '<TABLE class="sortable"; style="text-align: center; border-style:solid; border-width:1px;" border="0" >';
+my $infoTR="\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA nowrap=\"nowrap\">";
 
 # Quiero solo el nombre del script sin path.
 $0 =~ s/.*\///g;
@@ -19,14 +20,14 @@ sub footer() {  # HTML Footer (chapamos por las buenas)
 }
 
 sub td($$) {# No soy tan viril para tratar las celdas a pelo.
-    my ($text, $args) = @_;
-    $args = "" if not defined $args; # Quitando warnings.
+    my $text = shift;
+    my $args = shift;
     return "<TD $args>$text</TD>" if defined $text and $text ne "" or return '<TD bgcolor=#EEEEEE style="color:grey;font-style:italic">Null</TD>';
 }
 
 sub tde($$) {# Aquí devolvemos un color de alerta si el valor es verdadero (diferente de 0)
-    my ($text, $args) = @_ ;
-    $args = "" if not defined $args; # Quitando warnings.
+    my $text = shift;
+    my $args = shift;
     if ( defined $text and $text ne "") {
         if ($text gt 0) {
             return "<TD bgcolor=#D9B38><I>$text</I></TD>";
@@ -42,23 +43,61 @@ sub non_empty(%) { # Devuelve 0 (falso) si todos los valores del hash son ""
 }
 
 sub convert_bytes ($$){ # Bytes a 'Human Readable'
-    my ($bytes, $dec) = @_;
-    $bytes = 0 if not defined $bytes; # Quitando warnings.
-    $dec = 3 if not defined $dec; # Quitando warnings.
+    my $bytes = shift;
+    my $dec = shift;
     foreach my $posfix (qw(bytes Kb Mb Gb Tb Pb Eb Zb Yb)) {
         return sprintf("\%.${dec}f \%s", $bytes, $posfix) if $bytes < 1024;
         $bytes /= 1024;
      }
 }
 
-sub timeticks2HR($$) { # Centésimas de segundo a "Human Readable"
+sub timeticks2HR($) { # Centésimas de segundo a "Human Readable"
     my $seconds = ($_[0]/100);
     return sprintf ("%.1d Days, %.2d:%.2d:%.2d", $seconds/86400, $seconds/3600%24, $seconds/60%60, $seconds%60) if $seconds or return 0;
+}
+
+sub TrueSort(@) { # http://www.perlmonks.org/?node_id=483462
+    my @list = @_;
+    return @list[
+        map { unpack "N", substr($_,-4) }
+        sort
+        map {
+            my $key= $list[$_];
+            $key =~ s[(\d+)][ pack "N", $1 ]ge;
+            $key . pack "N", $_
+        } 0..$#list
+    ];
+}
+
+sub AgrArr(@) { #Agrupa los puertos de un array de un chui
+    my @out=();
+    my $cache=undef;
+    my @array=&TrueSort(@_);
+    for my $i (0..$#array) {
+        next if $array[$i] eq $array[$i+1]; #Nos cargamos los duplicados
+        my $next = $1.($2+1) if $array[$i] =~ /(.+?)(\d+)$/g;
+        if ( $next ne $array[$i+1] ) {
+            push (@out, $cache.$array[$i]);
+            undef($cache);
+        } elsif ( ! defined($cache) ) {
+            $cache = "$array[$i]~";
+        }
+    }
+    return @out;
+}
+
+sub arr_resta(@@) {  # devuelve @first - @second
+    my $first = shift;
+    my $second = shift;
+    my %hash;
+    $hash{$_}=1 foreach @$second;
+    return grep { not $hash{$_} } @$first;
 }
 
 #
 #   Empezamos
 #
+
 {   # Solo puede quedar uno. Solo funcionaremos si podemos tener acceso exclusivo a un fichero común.
     use Fcntl qw(LOCK_EX LOCK_NB);
     open HIGHLANDER, ">>/tmp/perl_$0_highlander" or die "Content-Type: text/html\n\nCannot open highlander: $!";
@@ -104,6 +143,7 @@ EOF
 
 # Para poder usar el script sin cgi.
 $FORM{'input'} = $ARGV[0] if not $FORM{'input'};
+#$FORM{'input'} = '192.168.238.3' if not $FORM{'input'};
 
 if ( $FORM{'input'} =~ /^[\w-]+(?:|(\.[\w-]+)+)$/ ) {
     print "<H2>$FORM{'input'}</H2>\n";
@@ -183,7 +223,6 @@ my $vtp_trunk_dyn_stat = $info->vtp_trunk_dyn_stat();
 {   #Info
     print "<B>Info:</B><BR>\n";
     print "$table<TR bgcolor=#AAAAAA><TD>Index</TD><TD>Name</TD></TR>";
-    my $infoTR="\t<TR bgcolor=#DDDDDD><TD bgcolor=#AAAAAA>";
     print "${infoTR}Name</TD>".&td($info->name()).'</TR>';
     print "${infoTR}Class</TD>".&td($info->class()).'</TR>';
     print "${infoTR}Uptime</TD>".&td(&timeticks2HR($info->uptime())).'</TR>';
@@ -196,6 +235,19 @@ my $vtp_trunk_dyn_stat = $info->vtp_trunk_dyn_stat();
     print "${infoTR}Bulkwalk</TD>".&td($info->bulkwalk()).'</TR>';
     print "</TABLE>\n";
 }
+
+
+# !!!!!!!
+#my @keys = grep { $i_up->{$_} ne "up" } keys %{$i_up};
+#return sort map { $interfaces->{$_} } @keys or 0;
+#
+#my %tmphash= ();
+#my @keys = grep { $i_up->{$_} ne "up" } keys %{$i_up};
+#@tmphash{@keys} = @$i_up{@keys};
+#
+#while ((my $k, my $v) = each %tmphash) {
+#    print "$k = >$v\n" ;
+#}
 
 {   # IP Address Table
     my $index = $info->ip_index();
@@ -272,6 +324,42 @@ if ( &non_empty($info->ipr_if()) ) {
     print "</TABLE>\n";
 }
 
+sub hashmatch(%$) { # devuelve el puerto asociado a claves de $hash cuyo valor coinciden con $reg
+    my $hash = shift;
+    my $reg = shift;
+    my @tmplist = grep { $hash->{$_} =~ $reg and $i_type->{$_} eq "ethernetCsmacd" } keys %$hash;
+    my @result = ();
+    @result = map { $interfaces->{$_} } @tmplist or ();
+    return @result;
+}
+
+{   #Totals
+    my @ether     = &hashmatch($i_type,     ".*");
+    my @adminon   = &hashmatch($i_up_admin, "up");
+    my @adminoff  = &arr_resta(\@ether,     \@adminon);
+    my @operon    = &hashmatch($i_up,       "up");
+    my @operoff   = &arr_resta(\@ether,     \@operon);
+    my @gbports   = &hashmatch($i_speed,    "1.0 G");
+    @gbports      = &arr_resta(\@gbports,   \@operoff);
+    my @fastports = &hashmatch($i_speed,    "100 M");
+    @fastports    = &arr_resta(\@fastports, \@operoff);
+    my @ethports  = &hashmatch($i_speed,    "10 M");
+    @ethports     = &arr_resta(\@ethports,  \@operoff);
+    my @halfdup   = &hashmatch($i_duplex,   "half");
+    @halfdup      = &arr_resta(\@halfdup,   \@operoff);
+    print '<B>Totals:</B><BR/>';
+    print "$table<TR bgcolor=#AAAAAA>".&td('Range').&td('Ports').&td('Total')."</TR>";
+    print "${infoTR}Admin On</TD>"    .&td(join (", ", &AgrArr(@adminon)))  .&td(($#adminon+1))."</TR>\n";
+    print "${infoTR}Admin Off</TD>"   .&td(join (", ", &AgrArr(@adminoff))) .&td(($#adminoff+1))."</TR>\n";
+    print "${infoTR}Oper On</TD>"     .&td(join (", ", &AgrArr(@operon)))   .&td(($#operon+1))."</TR>\n";
+    print "${infoTR}Oper Off</TD>"    .&td(join (", ", &AgrArr(@operoff)))  .&td(($#operoff+1))."</TR>\n";
+    print "${infoTR}Gb Link</TD>"     .&td(join (", ", &AgrArr(@gbports)))  .&td(($#gbports+1))."</TR>\n";
+    print "${infoTR}Fast Link</TD>"   .&td(join (", ", &AgrArr(@fastports))).&td(($#fastports+1))."</TR>\n";
+    print "${infoTR}Ether Link</TD>"  .&td(join (", ", &AgrArr(@ethports))) .&tde(($#ethports+1))."</TR>\n";
+    print "${infoTR}Half Duplex</TD>" .&td(join (", ", &AgrArr(@halfdup)))  .&tde(($#halfdup+1))."</TR>\n";
+    print "</TABLE>\n";
+}
+
 {   # Ports
     print "<B>Ports:</B><BR>\n";
     print "$table<TR bgcolor=#AAAAAA>"
@@ -315,13 +403,13 @@ if ( &non_empty($info->ipr_if()) ) {
         $TRArgs = 'bgcolor=#8CB3D9' if $i_up_admin->{$iid} eq "down";
         $TRArgs = 'bgcolor=#EEEEEE style="color:gray; font-style:italic"' if $i_up_admin->{$iid} eq "down" and $i_up->{$iid} eq "down";
 
-        my $egress = join(' ',sort(@{$i_vlan_membership->{$iid}})) if $i_vlan_membership->{$iid};
+        my $egress = join('<BR>', &TrueSort(@{$i_vlan_membership->{$iid}})) if $i_vlan_membership->{$iid};
 
         my @untagged = ();
         foreach (keys %$v_name) {
             push (@untagged, $_) if @{$qb_v_untagged->{$_}}[($iid-1)] eq 1;
         }
-        my $untag = join(' ', sort(@untagged));
+        my $untag = join('<BR>', &TrueSort(@untagged));
 
         print "\t<TR $TRArgs><TD bgcolor=#AAAAAA>$i_index->{$iid}</TD>"
             .&td($interfaces->{$iid});
