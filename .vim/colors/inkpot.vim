@@ -1,6 +1,8 @@
 " Vim color file
 " Name:       inkpot.vim
-" Maintainer: Ciaran McCreesh <ciaran.mccreesh@blueyonder.co.uk>
+" Maintainer: Ciaran McCreesh <ciaran.mccreesh@googlemail.com>
+" Homepage:   http://github.com/ciaranm/inkpot/
+"
 " This should work in the GUI, rxvt-unicode (88 colour mode) and xterm (256
 " colour mode). It won't work in 8/16 colour terminals.
 "
@@ -46,10 +48,12 @@ endif
 
 if has("gui_running")
     if ! g:inkpot_black_background
-"        hi Normal         gui=NONE   guifg=#cfbfad   guibg=#1e1e27
+        hi Normal         gui=NONE   guifg=#cfbfad   guibg=#1e1e27
     else
-"        hi Normal         gui=NONE   guifg=#cfbfad   guibg=#000000
+        hi Normal         gui=NONE   guifg=#cfbfad   guibg=#000000
     endif
+
+    hi CursorLine         guibg=#2e2e37
 
     hi IncSearch      gui=BOLD   guifg=#303030   guibg=#cd8b60
     hi Search         gui=NONE   guifg=#303030   guibg=#cd8b60
@@ -134,7 +138,7 @@ if has("gui_running")
         hi SpellLocal   gui=undercurl guisp=#cccc66
         hi SpellCap     gui=undercurl guisp=#66cccc
 
-        hi MatchParen   gui=NONE      guifg=#404040   guibg=#8fff8b
+        hi MatchParen   gui=NONE      guifg=#cfbfad   guibg=#4e4e8f
     endif
 else
     if ! g:inkpot_black_background
@@ -173,7 +177,9 @@ else
     exec "hi FoldColumn     cterm=NONE   ctermfg=" . <SID>X(39) . " ctermbg=" . <SID>X(80)
 
     exec "hi Directory      cterm=NONE   ctermfg=" . <SID>X(28) . " ctermbg=" . "NONE"
-    exec "hi LineNr         cterm=NONE   ctermfg=" . <SID>X(39) . " ctermbg=" . <SID>X(80)
+    exec "hi LineNr         cterm=NONE   ctermfg=" . <SID>X(85) . " ctermbg=" . <SID>X(81)
+    exec "hi CursorLine     cterm=NONE   ctermbg=" . <SID>X(80)
+    exec "hi CursorColumn   cterm=NONE   ctermbg=" . <SID>X(80)
     exec "hi NonText        cterm=BOLD   ctermfg=" . <SID>X(39) . " ctermbg=" . "NONE"
     exec "hi SpecialKey     cterm=BOLD   ctermfg=" . <SID>X(55) . " ctermbg=" . "NONE"
     exec "hi Title          cterm=BOLD   ctermfg=" . <SID>X(48) . " ctermbg=" . "NONE"

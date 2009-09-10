@@ -16,7 +16,8 @@ set number                      " muetra nº de lineas
 set encoding=utf-8              " Encoding
 set termencoding=utf-8          " ^
 if v:version >= 700
-    set cursorline               " Resalta la línea del cursor
+    set cursorline              " Resalta la línea del cursor
+    set cursorcolumn            " Resalta la columna del cursor
     set list listchars=tab:»-,eol:¶,trail:·,nbsp:¬  " Muestra chars 'no deseados'
 endif
 set mouse=a                     " selecciones no incluyen el nº de lineas.
@@ -52,7 +53,7 @@ set statusline+=%-14.(%l,%c%V%)\ %<%P        " offset
 "-------------------------------------------------------------------------------
 set t_Co=256                                    " porsia
 if has('gui_running')
-    set cursorline
+"    set cursorline
     colorscheme zenburn                         " Tema para gVim
     let &guicursor = &guicursor . ",a:blinkon0" " Disable cursor blinking
 "    set guioptions-=m                           " Fuera Menu
@@ -67,7 +68,7 @@ if has('gui_running')
 elseif (&term =~ 'xterm')
     colorscheme zenburn     " Tema para xterm.
 elseif (&term =~ 'rxvt-256color')
-    colorscheme inkpot      " Tema para rxvt-unicode-256color.
+    colorscheme inkpot      " Tema para rxvt-256color.
 else
     colorscheme desert      " Tema para el resto
 endif
