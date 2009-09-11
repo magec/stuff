@@ -81,9 +81,9 @@ if has("gui_running")
     hi DiffDelete     gui=NONE   guifg=#ffffcd   guibg=#6d3030
     hi DiffAdd        gui=NONE   guifg=#ffffcd   guibg=#306d30
 
-    hi Cursor         gui=NONE   guifg=#404040   guibg=#8b8bff
-    hi lCursor        gui=NONE   guifg=#404040   guibg=#8fff8b
-    hi CursorIM       gui=NONE   guifg=#404040   guibg=#8b8bff
+    hi Cursor         gui=NONE   guifg=#FFFFFF   guibg=#8b8bff
+    hi lCursor        gui=NONE   guifg=#FFFFFF   guibg=#8fff8b
+    hi CursorIM       gui=NONE   guifg=#FFFFFF   guibg=#8b8bff
 
     hi Folded         gui=NONE   guifg=#cfcfcd   guibg=#4b208f
     hi FoldColumn     gui=NONE   guifg=#8b8bcd   guibg=#2e2e2e
@@ -177,10 +177,10 @@ else
     exec "hi FoldColumn     cterm=NONE   ctermfg=" . <SID>X(39) . " ctermbg=" . <SID>X(80)
 
     exec "hi Directory      cterm=NONE   ctermfg=" . <SID>X(28) . " ctermbg=" . "NONE"
-    exec "hi LineNr         cterm=NONE   ctermfg=" . <SID>X(85) . " ctermbg=" . <SID>X(81)
-    exec "hi CursorLine     cterm=NONE   ctermbg=" . <SID>X(80)
-    exec "hi CursorColumn   cterm=NONE   ctermbg=" . <SID>X(80)
-    exec "hi NonText        cterm=BOLD   ctermfg=" . <SID>X(39) . " ctermbg=" . "NONE"
+    exec "hi LineNr         cterm=NONE   ctermfg=" . <SID>X(85) . " ctermbg=" . <SID>X(16)
+    exec "hi CursorLine     cterm=NONE                              ctermbg=" . <SID>X(0)
+    exec "hi CursorColumn   cterm=NONE                              ctermbg=" . <SID>X(32)
+    exec "hi NonText        cterm=BOLD   ctermfg=" . <SID>X(80) . " ctermbg=" . "NONE"
     exec "hi SpecialKey     cterm=BOLD   ctermfg=" . <SID>X(55) . " ctermbg=" . "NONE"
     exec "hi Title          cterm=BOLD   ctermfg=" . <SID>X(48) . " ctermbg=" . "NONE"
     exec "hi Visual         cterm=NONE   ctermfg=" . <SID>X(79) . " ctermbg=" . <SID>X(38)

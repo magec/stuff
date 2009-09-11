@@ -17,7 +17,7 @@ set encoding=utf-8              " Encoding
 set termencoding=utf-8          " ^
 if v:version >= 700
     set cursorline              " Resalta la línea del cursor
-    set cursorcolumn            " Resalta la columna del cursor
+"    set cursorcolumn            " Resalta la columna del cursor
     set list listchars=tab:»-,eol:¶,trail:·,nbsp:¬  " Muestra chars 'no deseados'
 endif
 set mouse=a                     " selecciones no incluyen el nº de lineas.

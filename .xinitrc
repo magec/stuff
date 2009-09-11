@@ -1,6 +1,6 @@
 #!/bin/sh
 # I log
-errorlog="~/.xsession.err"
+errorlog="$HOME/.xsession.err"
 if ( cp /dev/null "$errorlog" 2> /dev/null )
 then
     chmod 600 "$errorlog"
