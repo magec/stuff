@@ -15,19 +15,19 @@ $0 =~ s/.*\///g;
 
 # Funciones.
 sub footer() {  # HTML Footer (chapamos por las buenas)
-    print "</BODY></HTML>";
+    print "</BODY></HTML>\n";
     exit 0;
 }
 
-sub td($$) {# No soy tan viril para tratar las celdas a pelo.
-    my $text = shift;
-    my $args = shift;
+sub td($$) {# Paso de tratar las celdas a pelo.
+    my $text = shift || "";
+    my $args = shift || "";
     return "<TD $args>$text</TD>" if defined $text and $text ne "" or return '<TD bgcolor=#EEEEEE style="color:grey;font-style:italic">Null</TD>';
 }
 
 sub tde($$) {# Aquí devolvemos un color de alerta si el valor es verdadero (diferente de 0)
-    my $text = shift;
-    my $args = shift;
+    my $text = shift || 0;
+    my $args = shift || "";
     if ( defined $text and $text ne "") {
         if ($text gt 0) {
             return "<TD bgcolor=#D9B38><I>$text</I></TD>";
@@ -35,7 +35,7 @@ sub tde($$) {# Aquí devolvemos un color de alerta si el valor es verdadero (dif
             return "<TD $args>$text</TD>";
         }
     } else {
-        return "<TD bgcolor=#D1D175><I>Vacío</I></TD>";
+         return '<TD bgcolor=#EEEEEE style="color:grey;font-style:italic">Null</TD>';
     }
 }
 sub non_empty(%) { # Devuelve 0 (falso) si todos los valores del hash son ""
@@ -77,7 +77,7 @@ sub AgrArr(@) { #Agrupa los puertos de un array de un chui
         next if $array[$i] eq $array[$i+1]; #Nos cargamos los duplicados
         my $next = $1.($2+1) if $array[$i] =~ /(.+?)(\d+)$/g;
         if ( $next ne $array[$i+1] ) {
-            push (@out, $cache.$array[$i]);
+            push (@out, $cache.$array[$i]) if $cache.$array[$i];
             undef($cache);
         } elsif ( ! defined($cache) ) {
             $cache = "$array[$i]~";
@@ -142,8 +142,8 @@ EOF
 }
 
 # Para poder usar el script sin cgi.
-$FORM{'input'} = $ARGV[0] if not $FORM{'input'};
-#$FORM{'input'} = '192.168.238.3' if not $FORM{'input'};
+#$FORM{'input'} = $ARGV[0] if not $FORM{'input'};
+$FORM{'input'} = '192.168.246.33' if not $FORM{'input'};
 
 if ( $FORM{'input'} =~ /^[\w-]+(?:|(\.[\w-]+)+)$/ ) {
     print "<H2>$FORM{'input'}</H2>\n";
@@ -163,7 +163,7 @@ my $info = new SNMP::Info(
             BulkWalk    => 1,
             # The rest is passed to SNMP::Session
             DestHost    => $FORM{'input'}, # || '192.168.238.4', # 192.168.247.80
-            Community   => 'public',
+            Community   => 'uocpublic',
             Version     => 2,
             MibDirs     => [    '/usr/share/netdisco/mibs/rfc'
                            ,    '/usr/share/netdisco/mibs/net-snmp'
@@ -209,33 +209,44 @@ my $c_port     = $info->c_port();
 #Vlan
 my $i_vlan = $info->i_vlan();
 my $i_vlan_membership = $info->i_vlan_membership();
+my $qb_v_fbdn_egress = $info->qb_v_fbdn_egress();
 my $qb_v_untagged = $info->qb_v_untagged();
 my $v_name = $info->v_name();
 # A esto se le va la olla con algunos cisco y da llaves del tipo "1.100"
 foreach (keys %$v_name) {
+    next if /^\d+$/; # Si la vlan es todo digitos, OK
     /\d+$/;
     $v_name->{$&} = $v_name->{$_};
+    delete $v_name->{$_};
 }
+
+#print Dumper $v_name;
+
+#&footer;
+
 my $vtp_trunk_dyn = $info->vtp_trunk_dyn();
 my $vtp_trunk_dyn_stat = $info->vtp_trunk_dyn_stat();
 #   Fin del martilleo.
 
 {   #Info
     print "<B>Info:</B><BR>\n";
-    print "$table<TR bgcolor=#AAAAAA><TD>Index</TD><TD>Name</TD></TR>";
-    print "${infoTR}Name</TD>".&td($info->name()).'</TR>';
-    print "${infoTR}Class</TD>".&td($info->class()).'</TR>';
-    print "${infoTR}Uptime</TD>".&td(&timeticks2HR($info->uptime())).'</TR>';
-    print "${infoTR}Contact</TD>".&td($info->contact()).'</TR>';
-    print "${infoTR}Location</TD>".&td($info->location()).'</TR>';
-    print "${infoTR}Layers</TD>".&td($info->layers()).'</TR>';
-    print "${infoTR}Ports</TD>".&td($info->ports()).'</TR>';
-    print "${infoTR}Ip Forwarding".&td($info->ipforwarding()).'</TR>';
-    print "${infoTR}CDP".&td($info->hasCDP()).'</TR>';
-    print "${infoTR}Bulkwalk</TD>".&td($info->bulkwalk()).'</TR>';
+    print "$table<TR bgcolor=#AAAAAA><TD>Index</TD><TD>Name</TD></TR>\n";
+    print "${infoTR}Name</TD>".&td($info->name())."</TR>\n";
+    print "${infoTR}Location</TD>".&td($info->location())."</TR>\n";
+    print "${infoTR}Contact</TD>".&td($info->contact())."</TR>\n";
+    print "${infoTR}Class</TD>".&td($info->class())."</TR>\n";
+    print "${infoTR}Model</TD>".&td($info->model())."</TR>\n";
+    print "${infoTR}OS Version</TD>".&td($info->os_ver())."</TR>\n";
+    print "${infoTR}Serial Number</TD>".&td($info->serial())."</TR>\n";
+    print "${infoTR}Base MAC</TD>".&td($info->mac())."</TR>\n";
+    print "${infoTR}Uptime</TD>".&td(&timeticks2HR($info->uptime()))."</TR>\n";
+    print "${infoTR}Layers</TD>".&td($info->layers())."</TR>\n";
+    print "${infoTR}Ports</TD>".&td($info->ports())."</TR>\n";
+    print "${infoTR}Ip Forwarding".&td($info->ipforwarding())."</TR>\n";
+    print "${infoTR}CDP".&td($info->hasCDP())."</TR>\n";
+    print "${infoTR}Bulkwalk</TD>".&td($info->bulkwalk())."</TR>\n";
     print "</TABLE>\n";
 }
-
 
 # !!!!!!!
 #my @keys = grep { $i_up->{$_} ne "up" } keys %{$i_up};
@@ -334,29 +345,57 @@ sub hashmatch(%$) { # devuelve el puerto asociado a claves de $hash cuyo valor c
 }
 
 {   #Totals
-    my @ether     = &hashmatch($i_type,     ".*");
-    my @adminon   = &hashmatch($i_up_admin, "up");
-    my @adminoff  = &arr_resta(\@ether,     \@adminon);
-    my @operon    = &hashmatch($i_up,       "up");
-    my @operoff   = &arr_resta(\@ether,     \@operon);
-    my @gbports   = &hashmatch($i_speed,    "1.0 G");
-    @gbports      = &arr_resta(\@gbports,   \@operoff);
-    my @fastports = &hashmatch($i_speed,    "100 M");
-    @fastports    = &arr_resta(\@fastports, \@operoff);
-    my @ethports  = &hashmatch($i_speed,    "10 M");
-    @ethports     = &arr_resta(\@ethports,  \@operoff);
-    my @halfdup   = &hashmatch($i_duplex,   "half");
-    @halfdup      = &arr_resta(\@halfdup,   \@operoff);
+    my @ether      = &hashmatch($i_type,             ".*");
+    my @adminon    = &hashmatch($i_up_admin,         "up");
+    my @adminoff   = &arr_resta(\@ether,             \@adminon);
+    my @operon     = &hashmatch($i_up,               "up");
+    my @operoff    = &arr_resta(\@ether,             \@operon);
+    my @gbports    = &hashmatch($i_speed,            "1.0 G");
+    @gbports       = &arr_resta(\@gbports,           \@operoff);
+    my @fastports  = &hashmatch($i_speed,            "100 M");
+    @fastports     = &arr_resta(\@fastports,         \@operoff);
+    my @ethports   = &hashmatch($i_speed,            "10 M");
+    @ethports      = &arr_resta(\@ethports,          \@operoff);
+    my @halfdup    = &hashmatch($i_duplex,           "half");
+    @halfdup       = &arr_resta(\@halfdup,           \@operoff);
+    my @trunkports = &hashmatch($vtp_trunk_dyn_stat, '^trunking$' );
     print '<B>Totals:</B><BR/>';
     print "$table<TR bgcolor=#AAAAAA>".&td('Range').&td('Ports').&td('Total')."</TR>";
-    print "${infoTR}Admin On</TD>"    .&td(join (", ", &AgrArr(@adminon)))  .&td(($#adminon+1))."</TR>\n";
-    print "${infoTR}Admin Off</TD>"   .&td(join (", ", &AgrArr(@adminoff))) .&td(($#adminoff+1))."</TR>\n";
-    print "${infoTR}Oper On</TD>"     .&td(join (", ", &AgrArr(@operon)))   .&td(($#operon+1))."</TR>\n";
-    print "${infoTR}Oper Off</TD>"    .&td(join (", ", &AgrArr(@operoff)))  .&td(($#operoff+1))."</TR>\n";
-    print "${infoTR}Gb Link</TD>"     .&td(join (", ", &AgrArr(@gbports)))  .&td(($#gbports+1))."</TR>\n";
-    print "${infoTR}Fast Link</TD>"   .&td(join (", ", &AgrArr(@fastports))).&td(($#fastports+1))."</TR>\n";
-    print "${infoTR}Ether Link</TD>"  .&td(join (", ", &AgrArr(@ethports))) .&tde(($#ethports+1))."</TR>\n";
-    print "${infoTR}Half Duplex</TD>" .&td(join (", ", &AgrArr(@halfdup)))  .&tde(($#halfdup+1))."</TR>\n";
+    print "${infoTR}Admin On</TD>"    .&td(join (", ", &AgrArr(@adminon)))   .&td(($#adminon+1))."</TR>\n";
+    print "${infoTR}Admin Off</TD>"   .&td(join (", ", &AgrArr(@adminoff)))  .&td(($#adminoff+1))."</TR>\n";
+    print "${infoTR}Oper On</TD>"     .&td(join (", ", &AgrArr(@operon)))    .&td(($#operon+1))."</TR>\n";
+    print "${infoTR}Oper Off</TD>"    .&td(join (", ", &AgrArr(@operoff)))   .&td(($#operoff+1))."</TR>\n";
+    print "${infoTR}Gb Link</TD>"     .&td(join (", ", &AgrArr(@gbports)))   .&td(($#gbports+1))."</TR>\n";
+    print "${infoTR}Fast Link</TD>"   .&td(join (", ", &AgrArr(@fastports))) .&td(($#fastports+1))."</TR>\n";
+    print "${infoTR}Ether Link</TD>"  .&td(join (", ", &AgrArr(@ethports)))  .&tde(($#ethports+1))."</TR>\n";
+    print "${infoTR}Half Duplex</TD>" .&td(join (", ", &AgrArr(@halfdup)))   .&tde(($#halfdup+1))."</TR>\n";
+    print "${infoTR}Trunking</TD>"    .&td(join (", ", &AgrArr(@trunkports))).&td(($#trunkports+1))."</TR>\n" if @trunkports;
+    print "</TABLE>\n";
+}
+
+#my @keys = grep { $i_up->{$_} ne "up" } keys %{$i_up};
+#return sort map { $interfaces->{$_} } @keys or 0;
+
+{   # Vlans
+    print "<B>Vlans:</B><BR/>\n";
+    print "$table<TR bgcolor=#AAAAAA><TD>Nombre</TD><TD>Pvid</TD><TD>Tipo</TD><TD>Puertos</TD><TD>Total</TD></TR>\n";
+    foreach my $pvid ( sort {$a <=> $b} keys %$v_name) {
+        my @pvid        = ();
+        my @pegress     = ();
+        my @pforbegress = ();
+        my @puntagged   = ();
+        foreach my $port (keys %$interfaces) {
+            next unless $i_type->{$port} eq "ethernetCsmacd"; #Solo tendremos en cuenta puertos "usables"
+            push (@pvid,        $interfaces->{$port}) if $i_vlan->{$port} eq $pvid;
+            push (@pegress,     $interfaces->{$port}) if grep { $_ eq $pvid } @{$i_vlan_membership->{$port}};
+            push (@pforbegress, $interfaces->{$port}) if @{$qb_v_fbdn_egress->{$pvid}}[($port-1)];
+            push (@puntagged,   $interfaces->{$port}) if @{$qb_v_untagged->{$pvid}}[($port-1)];
+        }
+        print "\t<TR bgcolor=#DDDDDD><TD rowspan=\"4\" bgcolor=#AAAAAA>$v_name->{$pvid}</TD><TD rowspan=\"4\" >$pvid</TD><TD bgcolor=#BBBBBB>Pvid</TD>".&td(join (", ", &AgrArr(@pvid)))  .&td(($#pvid+1))."</TR>\n";
+        print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#DDDDDD>Egress</TD>".&td(join (", ", &AgrArr(@pegress)))  .&td(($#pegress+1))."</TR>\n";
+        print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#BBBBBB>Forbidden</TD>".&td(join (", ", &AgrArr(@pforbegress)))  .&tde(($#pforbegress+1))."</TR>\n";
+        print "\t<TR bgcolor=#DDDDDD><TD bgcolor=#DDDDDD>Untagged</TD>".&td(join (", ", &AgrArr(@puntagged)))  .&td(($#puntagged+1))."</TR>\n";
+    }
     print "</TABLE>\n";
 }
 
@@ -407,7 +446,8 @@ sub hashmatch(%$) { # devuelve el puerto asociado a claves de $hash cuyo valor c
 
         my @untagged = ();
         foreach (keys %$v_name) {
-            push (@untagged, $_) if @{$qb_v_untagged->{$_}}[($iid-1)] eq 1;
+            next unless @{$qb_v_untagged->{$_}}[($iid-1)];
+            push (@untagged, $_) if @{$qb_v_untagged->{$_}}[($iid-1)];
         }
         my $untag = join('<BR>', &TrueSort(@untagged));
 
