@@ -257,8 +257,8 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "n", function () awful.util.spawn('mpc pause') end),
     awful.key({ modkey, "Control" }, "m", function () awful.util.spawn('mpc prev'); wicked.widgets.mpd() end),
     awful.key({ modkey, "Control" }, ",", function () awful.util.spawn('mpc next'); wicked.widgets.mpd() end),
-    awful.key({ modkey, "Control" }, ".", function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB-'); getVol() end),
-    awful.key({ modkey, "Control" }, "-", function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB+'); getVol() end),
+    awful.key({ modkey, "Control" }, ".", function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB-') end),
+    awful.key({ modkey, "Control" }, "-", function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB+') end),
     awful.key({ modkey }, "Up", function () awful.client.focus.byidx(1); if client.focus then client.focus:raise() end end),
     awful.key({ modkey }, "Down", function () awful.client.focus.byidx(-1);  if client.focus then client.focus:raise() end end)
 --  Fin de la enchufada.
