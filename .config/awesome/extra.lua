@@ -386,7 +386,7 @@ memwidget.text = activeram()
 --  mouse_enter
 memwidget.mouse_enter = function()
     naughty.destroy(pop)
-    local text = pread("free")
+    local text = pread("free -tm")
     pop = naughty.notify({  title  = '<span color="white">Free</span>\n'
                          , text       = text
                          , icon       = imgpath..'mem.png'
