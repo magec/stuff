@@ -36,7 +36,7 @@ my %cd=();
 my %vgm=();
 my @catnums=();
 my @log=();
-my $threshold = 50;
+my $threshold = 121;
 
 
 sub dprint {
@@ -64,17 +64,15 @@ foreach my $dir (@ARGV) {
             close(LOG);
             next;
         }
-        foreach (sort keys %$ids) {
+
+        foreach (sort { $ids->{$a}{type} cmp $ids->{$b}{type} } keys %$ids) {
             %vgm=();
-            dprint BLUE BOLD"\nTrying ($_) - $ids->{$_}\n\n";
+            dprint BLUE BOLD"\nTrying ($_) - $ids->{$_}{title}\n\n";
             &vgmdbid($_);
             $vgmcd = &compare;
             if ($vgmcd) {
                 my $result = &rename($vgmcd,$dir);
-                    if ($result) {
-                    dprint GREEN BOLD "#\n#\tOK! '$dirname' was tagged as '$result'\n#\n";
-                    last;
-                };
+                last if $result;
             }
         }
         unless ($vgmcd) {
@@ -97,7 +95,7 @@ sub http($$$) {
     my $req = HTTP::Request->new($method => $url); # Create a request
     $req->content_type('application/x-www-form-urlencoded');
     $req->referer($referer);
-    $req->content($content);
+    $req->content($content) if $content;
     my $res = $ua->request($req);   # Pass request to the User Agent and get a response back
     unless ($res->is_success) {     # Check the outcome of the response
         return $res->status_line;
@@ -117,7 +115,7 @@ sub hashfiles(@) {
         $curalbum = $tags->{ALBUM} || $tags->{album} || "";
         my $secsre = $info->{TOTALSAMPLES} / $info->{SAMPLERATE};
         $secsre =~ s/\.\d+$//g;
-        my $secs = sprintf ("%.2d:%.2d:%.2d", $secsre/3600%24, $secsre/60%60, $secsre%60);
+        my $secs = sprintf ("%.2d:%.2d", $secsre/60%60, $secsre%60);
         my $tnumber = $tags->{TRACKNUMBER} || $tags->{tracknumber} || "";
         $tnumber = $count unless $tnumber =~ /^\d\d$/;
         $tnumber = sprintf ("%02d", $tnumber) if length($tnumber) == 1;
@@ -160,14 +158,26 @@ sub vgmdbsearch($) {
     dprint BLUE BOLD "=" x (23+length($album))."\n";
     dprint BLUE BOLD "Querying VGMDB with: '$album'\n";
     dprint BLUE BOLD "=" x (23+length($album))."\n";
-    my $page = decode_entities(&http('http://vgmdb.net/search?do=results', 'POST', "action=advancedsearch&albumtitles=$album&sortby=release&orderby=ASC",'http://vgmdb.net/search'));
+    my $page = decode_entities(&http('http://vgmdb.net/search?do=results', 'POST', "action=advancedsearch&albumtitles=$album&sortby=release&orderby=ASC&childmodifier=1",'http://vgmdb.net/search'));
     $page = encode('utf-8', $page); # A lo bestia.
     my %results=();
     dprint GREEN "\nCATALOG NUM\tID\tYEAR\tNAME\n";
     dprint GREEN "=" x (80)."\n";
-    while ($page =~ /<tr>.*?<span class=.catalog.>(.*?)<.span>.*?<a href=....album.(\d+).><span style=.color: ([#\w]+).><span class=.albumtitle. lang=.en. style=.display:inline.>(.*?)<.span>.*?(\d+)</sg ) {
-        dprint "$1\t$2\t$5\t$4\t$3\n";
-        $results{$2} = $4;
+
+    my %types = (  '#CEFFFF'=> 'Official Release'
+                ,  yellow   => 'Enclosure / Promo'
+                ,  orange   => 'Doujin / Fanmade'
+                ,  '#00BFFF'=> 'Works'
+                ,  silver   => 'Game Animation & Film'
+                ,  violet   => 'Demo Scene'
+                ,  tomato   => 'Bootleg'
+                ,  white    => 'Other'
+                ,  seagreen => 'Cancelled Release'
+                );
+
+    while ($page =~ /<tr>.*?<span class=.catalog.>(.*?)<.span>.*?<a href=....album.(\d+).><span style=.color: ([#\w]+).><span class=.albumtitle. lang=.en. style=.display:inline.>(.*?)<.span>.*?(\d{4})</sg ) {
+        dprint sprintf ("%-13.13s %5.5s %4.4s %-21.21s %s \n", $1, $2, $5, $types{$3}, $4);
+        $results{$2} = {title =>$4, type =>$3};
     }
     dprint GREEN "=" x (80)."\n";
     return \%results;
@@ -315,7 +325,9 @@ sub rename($) {
     }
     my $dir   = shift;
     my $newdir = "$vgm{ALBUM} [$vgmcd]";
-    $newdir =~ s/[\/\:*?<>|]//g; # NTFS Valid file?
+    $newdir =~ s/[\/:|]/,/g;
+    $newdir =~ s/ , /, /g;
+    $newdir =~ s/[\*?<>]//g;
     $newdir =~ s/\s+/ /g;
     #print Dumper %cd;
     dprint GREEN "Directory to Create/Use: "; dprint "'$newdir'\n";
@@ -324,7 +336,7 @@ sub rename($) {
 #        $cd{$track}{NTITLE} =~ s/[\/\:*?<>|]/ /g; # NTFS Valid file?
         $cd{$track}{NTITLE} =~ s/["\*?<>]//g;  # NTFS Valid file
         $cd{$track}{NTITLE} =~ s/[\/:|]/, /g; # and proper
-        $cd{$track}{NTITLE} =~ s/ +/ /g;      # formatting
+        $cd{$track}{NTITLE} =~ s/\s+/ /g;      # formatting
         my $destfile = "$newdir/$track $cd{$track}{NTITLE}.flac";
         $destfile =~ s/[\:*?<>|]//g; # NTFS Valid file?
         my $bytes=-s $cd{$track}{FNAME};
@@ -383,11 +395,12 @@ sub rename($) {
         }
     } # foreach my $track
 
+    dprint GREEN BOLD "#\n#\tAll OK!\n#\n";
     open(LOG, "> $newdir/log_ansi.txt") || die "Can't redirect stdout";
-    map {s/ +$//g;print LOG $_} @log;
+    map {print LOG $_} @log;
     close(LOG);
     open(LOG, "> $newdir/log.txt") || die "Can't redirect stdout";
-    map {s/ +$//g; s/.\[\d+m//g; print LOG $_} @log;
+    map {s/.\[\d+m//g; print LOG $_} @log;
     close(LOG);
     return $newdir;
 } # sub rename
