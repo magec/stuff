@@ -1,6 +1,11 @@
 #!/usr/bin/perl
-# This will search for flac files on directories then will try to copy/tag them in the current directory via direct http queries to vgmdb.net, (or not).
-#my $content ="action=advancedsearch&albumtitles=Valkyrie+Profile+Covenant+of+the+Plume+Arrange+Album&catalognum=&composer=&arranger=&performer=&lyricist=&publisher=&game=&trackname=&notes=&anyfield=&releasedatemodifier=is&day=0&month=0&year=0&discsmodifier=is&discs=&albumadded=&albumlastedit=&scanupload=&tracklistadded=&tracklistlastedit=&sortby=albumtitle&orderby=ASC&childmodifier=0&dosearch=Search+Albums+Now";
+#release:"Opus Magnum" AND artist:"Hollenthon" AND tracks:"9"
+#http://musicbrainz.org/ws/1/release/?type=xml&artist=hollenthon&title=opus+magnum&count=9
+#http://musicbrainz.org/ws/1/release/ac591bde-76b5-4bbc-ad7a-b7f19aeaac3c?type=xml&inc=artist+counts+release-events+discs+tracks+release-groups+artist-rels+label-rels+release-rels+track-rels+url-rels+track-level-rels+labels+tags+ratings+isrcs
+
+
+
+
 
 use strict;
 use warnings;
@@ -36,7 +41,7 @@ my %cd=();
 my %vgm=();
 my @catnums=();
 my @log=();
-my $threshold = 13;
+my $threshold = 3000;
 
 
 sub dprint {
@@ -55,6 +60,133 @@ foreach my $dir (@ARGV) {
         @files=map {"$dir/$_"} grep { !/^\.+$/ && /^.*flac$/i } readdir(DIR);
         closedir DIR;
         &hashfiles(@files);
+        my $tracknum = scalar @files;
+
+        my ($dirname) = $dir =~ /([^\/]+)(?:|\/)$/;
+    
+        my ($artist,$year,$album) = $dirname =~ /^(?:^(.*?)(?: - (\d+)|) - |)(.*?)$/ ;
+        next unless $album;
+        $album =~ s/[\[\{\(].*/+/gi;
+        $album =~ s/\smp3|flac|ape\s/+/gi;
+        $album =~ s/\s/+/g;
+        $artist = "" unless $artist;
+        $year   = "" unless $year;
+
+        print "'$dirname'\n";
+        print "$artist\n";
+        print "$year\n";
+        print "$album\n";
+        print "$tracknum\n";
+
+        my $first_xml = decode_entities(&http("http://musicbrainz.org/ws/1/release/?type=xml&artist=$artist&title=$album&count=$tracknum", 'GET'));
+
+        $first_xml = encode('utf-8', $first_xml); # A lo bestia.
+
+
+
+        sleep 1;
+        while ( $first_xml =~ /<release type="(.+?)" id="([\w-]+)" ext:score="100">/sg ) {
+           print WHITE BOLD "Type: "; print BLUE "$1\n";
+           print WHITE BOLD "ID: "; print BLUE "$2\n";
+            #my $second_xml = decode_entities(&http("http://musicbrainz.org/ws/1/release/$2?type=xml&inc=artist+counts+release-events+discs+tracks+release-groups+artist-rels+label-rels+release-rels+track-rels+url-rels+track-level-rels+labels+tags+ratings+isrcs", 'GET'));
+            my $second_xml = decode_entities(&http("http://musicbrainz.org/ws/1/release/$2?type=xml&inc=artist+release-events+tracks+url-rels", 'GET'));
+    $second_xml = encode('utf-8', $second_xml); # A lo bestia.
+#            print $second_xml;
+
+print WHITE BOLD "";
+            my ($aartist) = $second_xml =~ /<artist id="[\w-]+".+?<name>(.+?)<.name>/;
+           print WHITE BOLD "Artist: "; print BLUE "$aartist\n";
+
+           my $lastfmartist = $aartist;
+
+           $lastfmartist =~ s/\s/+/g;
+
+           print WHITE BOLD "LASTFMArtist: "; print BLUE "$lastfmartist\n";
+
+            my $third_xml = decode_entities(&http("http://ws.audioscrobbler.com/1.0/artist/$lastfmartist/toptags.xml", 'GET'));
+    $third_xml = encode('utf-8', $third_xml); # A lo bestia.
+
+            my $count=0;
+            while ($third_xml =~ /<tag>\s+<name>(.+?)<.name>\s+<count>(\d+)<.count>/sg) {
+                last if ++$count == 11;
+                my $genre=$1;
+                my $rank=$2;
+                $genre =~ s/([^\s]+)/\u\L$1/gi; # 1st Leter Uppercase Voodoo
+                print "$rank -> $genre\n";
+            }
+
+
+           my ($title) = $second_xml =~ /<release id="[\w-]+".+?<title>(.+?)<.title>/;
+           print WHITE BOLD "Title: "; print BLUE "$title\n";
+
+            my ($asin) = $second_xml =~ /<asin>(.+?)<.asin>/;
+            print WHITE BOLD "ASIN: "; print BLUE "$asin\n";
+
+            my ($event) = $second_xml =~ /<event(.+?)>/;
+            while ($second_xml =~ /<event(.+?)>/sg) {
+                print "$1\n";
+
+            }
+
+
+
+
+next;
+            my %events=();
+            while ($event =~ /(\w+)="(.+?)"/sg) {
+                $events{$1} = $2;
+                print WHITE BOLD "$1: " ; print BLUE "$2\n";
+            }
+
+            my ($urls) = $second_xml =~ /<.track-list><relation-list target-type="Url">(.+?)<.relation-list><.release>/;
+            if ($urls) {
+                while ($urls =~ /<relation type="(\w+)" target="(.+?)" begin="" end="".>/sg) {
+                    print WHITE BOLD "$1: "; print BLUE "$2\n";
+                }
+            }
+
+
+
+
+            my $count=0;
+            print GREEN "TRK TITLE                                        MBRAINZ <-> FILES  DIFFERENCE\n";
+            print GREEN "=" x (80)."\n";
+            while ( $second_xml =~ /<track id="[\w-]+"><title>(.*?)<.title><duration>(\d+)<.duration>.*?<.track>/sg ) {
+                $count = sprintf ("%02d", ++$count);
+            #    print YELLOW "$count  $2 vs $cd{$count}{TIMES}\t";
+            printf ("%-3.3s %-44.44s %7.7s <-> %-7.7s", $count, $1,  $2,  $cd{$count}{TIMES});
+                my $subs = $2 - $cd{$count}{TIMES};
+                if ($subs == 0) {
+                    print GREEN BOLD "(0 ms) OK!\n";
+                    $cd{$count}{NTITLE} = $1;
+                } elsif ($subs > 0 and $subs < $threshold) {
+                    print YELLOW BOLD "($subs ms) OK!\n";
+                    $cd{$count}{NTITLE} = $1;
+                } elsif ($subs < 0 and $subs > -$threshold) {
+                    print YELLOW BOLD "($subs ms) OK!\n";
+                    $cd{$count}{NTITLE} = $1;
+                } else {
+                    print RED BOLD "($subs ms) NOK!\n";
+                   # $mark=1;
+                }
+
+
+
+            }
+
+
+        }
+
+#    print Dumper %cd;
+
+        next;
+
+
+
+
+
+        exit 0;
+        &hashfiles(@files);
         my ($dirname) = $dir =~ /([^\/]+)(?:|\/)$/;
         my $ids = &vgmdbsearch($dirname);
         unless (keys(%$ids)) {
@@ -72,7 +204,10 @@ foreach my $dir (@ARGV) {
             $vgmcd = &compare;
             if ($vgmcd) {
                 my $result = &rename($vgmcd,$dir);
-                last if $result;
+                    if ($result) {
+                    dprint GREEN BOLD "#\n#\tOK! '$dirname' was tagged as '$result'\n#\n";
+                    last;
+                };
             }
         }
         unless ($vgmcd) {
@@ -113,9 +248,9 @@ sub hashfiles(@) {
         my $info = $flac->info();
         my $tags = $flac->tags();
         $curalbum = $tags->{ALBUM} || $tags->{album} || "";
-        my $secsre = $info->{TOTALSAMPLES} / $info->{SAMPLERATE};
+        my $secsre = ($info->{TOTALSAMPLES} / $info->{SAMPLERATE})*1000;
         $secsre =~ s/\.\d+$//g;
-        my $secs = sprintf ("%.2d:%.2d", $secsre/60%60, $secsre%60);
+        my $secs = sprintf ("%.2d:%.2d", $secsre/1000/60%60, $secsre/1000%60);
         my $tnumber = $tags->{TRACKNUMBER} || $tags->{tracknumber} || "";
         $tnumber = $count unless $tnumber =~ /^\d\d$/;
         $tnumber = sprintf ("%02d", $tnumber) if length($tnumber) == 1;
@@ -138,7 +273,7 @@ sub hashfiles(@) {
     dprint GREEN "=" x (80)."\n";
     foreach (sort {$a <=> $b} keys %cd ){
         next unless ref($cd{$_}) eq "HASH";
-            dprint sprintf ("%-3.3s %-44.44s %5.5s %4.4s %-10.10s %-16s \n", $_, $cd{$_}{TITLE}, $cd{$_}{TIME}, $cd{$_}{DATE}, $cd{$_}{GENRE}, $cd{$_}{ARTIST});
+            dprint sprintf ("%-3.3s %-44.44s %+5.5s %5.5s %-10.10s %-16s \n", $_, $cd{$_}{TITLE}, $cd{$_}{TIME}, $cd{$_}{DATE}, $cd{$_}{GENRE}, $cd{$_}{ARTIST});
     } # foreach %cd
      dprint GREEN "=" x (80)."\n";
 } # sub hashfiles
@@ -158,7 +293,7 @@ sub vgmdbsearch($) {
     dprint BLUE BOLD "=" x (23+length($album))."\n";
     dprint BLUE BOLD "Querying VGMDB with: '$album'\n";
     dprint BLUE BOLD "=" x (23+length($album))."\n";
-    my $page = decode_entities(&http('http://vgmdb.net/search?do=results', 'POST', "action=advancedsearch&albumtitles=$album&sortby=release&orderby=ASC&childmodifier=1",'http://vgmdb.net/search'));
+    my $page = decode_entities(&http('http://vgmdb.net/search?do=results', 'POST', "action=advancedsearch&albumtitles=$album&sortby=release&orderby=ASC",'http://vgmdb.net/search'));
     $page = encode('utf-8', $page); # A lo bestia.
     my %results=();
     dprint GREEN "\nCATALOG NUM\tID\tYEAR\tNAME\n";
@@ -176,7 +311,7 @@ sub vgmdbsearch($) {
                 );
 
     while ($page =~ /<tr>.*?<span class=.catalog.>(.*?)<.span>.*?<a href=....album.(\d+).><span style=.color: ([#\w]+).><span class=.albumtitle. lang=.en. style=.display:inline.>(.*?)<.span>.*?(\d{4})</sg ) {
-        dprint sprintf ("%-13.13s %5.5s %4.4s %-21.21s %s \n", $1, $2, $5, $types{$3}, $4);
+        dprint "$1\t$2\t$5\t$4\t($types{$3})\n";
         $results{$2} = {title =>$4, type =>$3};
     }
     dprint GREEN "=" x (80)."\n";
@@ -325,9 +460,7 @@ sub rename($) {
     }
     my $dir   = shift;
     my $newdir = "$vgm{ALBUM} [$vgmcd]";
-    $newdir =~ s/[\/:|]/,/g;
-    $newdir =~ s/ , /, /g;
-    $newdir =~ s/[\*?<>]//g;
+    $newdir =~ s/[\/\:*?<>|]//g; # NTFS Valid file?
     $newdir =~ s/\s+/ /g;
     #print Dumper %cd;
     dprint GREEN "Directory to Create/Use: "; dprint "'$newdir'\n";
@@ -336,7 +469,7 @@ sub rename($) {
 #        $cd{$track}{NTITLE} =~ s/[\/\:*?<>|]/ /g; # NTFS Valid file?
         $cd{$track}{NTITLE} =~ s/["\*?<>]//g;  # NTFS Valid file
         $cd{$track}{NTITLE} =~ s/[\/:|]/, /g; # and proper
-        $cd{$track}{NTITLE} =~ s/\s+/ /g;      # formatting
+        $cd{$track}{NTITLE} =~ s/ +/ /g;      # formatting
         my $destfile = "$newdir/$track $cd{$track}{NTITLE}.flac";
         $destfile =~ s/[\:*?<>|]//g; # NTFS Valid file?
         my $bytes=-s $cd{$track}{FNAME};
@@ -395,12 +528,11 @@ sub rename($) {
         }
     } # foreach my $track
 
-    dprint GREEN BOLD "#\n#\tAll OK!\n#\n";
     open(LOG, "> $newdir/log_ansi.txt") || die "Can't redirect stdout";
-    map {print LOG $_} @log;
+    map {s/ +$//g;print LOG $_} @log;
     close(LOG);
     open(LOG, "> $newdir/log.txt") || die "Can't redirect stdout";
-    map {s/.\[\d+m//g; print LOG $_} @log;
+    map {s/ +$//g; s/.\[\d+m//g; print LOG $_} @log;
     close(LOG);
     return $newdir;
 } # sub rename
