@@ -43,7 +43,12 @@ function createIco(widget,file,click)
     if not widget or not file or not click then return nil end
     widget.image = image(imgpath..'/'..file)
     widget.resize = false
-    widget:buttons({button({ }, 1, function () os.execute(click) end)})
+    awful.widget.layout.margins[widget] = { top = 1, bottom = 1, left = 1, right = 1 }
+    widget:buttons(awful.util.table.join(
+        awful.button({ }, 1, function ()
+            os.execute(click)
+        end)
+    ))
 end
 -- Converts bytes to human-readable units, returns value (number) and unit (string)
 function bytestoh(bytes)
@@ -153,21 +158,20 @@ function getMail()
     end
 end
 --  imagebox
-mail_ico = widget({ type = "imagebox", align = "right" })
+mail_ico = widget({ type = "imagebox" })
 createIco(mail_ico,'mail.png','opera "'..mailurl..'"&')
 --  textbox
 mailwidget = widget({ type  = "textbox"
                     , name  = "mailwidget"
-                    , align = "right"
                     })
 mailwidget.text=check_gmail()
 --  mouse_enter
-mailwidget.mouse_enter = function()
+mailwidget:add_signal("mouse::enter", function()
     count = 0
     check_gmail()
-end
+end)
 --  mouse_leave
-mailwidget.mouse_leave = function() naughty.destroy(pop) end
+mailwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --  buttons
 mailwidget:buttons({
     button({ }, 1, function ()
@@ -208,14 +212,13 @@ function bat_info()
 end
 battery = io.open("/sys/class/power_supply/BAT0/charge_now")
 if battery then
-bat_ico = widget({ type = "imagebox", align = "right" })
+bat_ico = widget({ type = "imagebox" })
 createIco(bat_ico, 'bat.png', terminal..' -e xterm')
 batterywidget = widget({ type  = "textbox"
                        , name  = "batterywidget"
-                       , align = "right"
                        })
 batterywidget.text = bat_info()
-batterywidget.mouse_enter = function()
+batterywidget:add_signal("mouse::enter",function()
     naughty.destroy(pop)
     local text = fread("/proc/acpi/battery/BAT0/info")
     pop = naughty.notify({ title  = '<span color="white">BAT0/info</span>\n'
@@ -226,26 +229,17 @@ batterywidget.mouse_enter = function()
                      , position   = "bottom_right"
                      , bg         = beautiful.bg_focus
                      })
-end
-batterywidget.mouse_leave = function() naughty.destroy(pop) end
+end)
+batterywidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 end
 --}}}
 --{{{    Separadores (img)
 --------------------------------------------------------------------------------
---  con align right
-Rseparator = widget({ type = 'imagebox'
-                    , name  = 'Rseparator'
-                    , align = 'right'
+separator = widget({ type = 'imagebox'
+                    , name  = 'separator'
                     })
-Rseparator.image = image(awful.util.getdir("config").."/imgs/separador2.png")
-Rseparator.resize = false
---  con align left
-Lseparator = widget({ type = 'imagebox'
-                    , name  = 'Lseparator'
-                    , align = 'left'
-                    })
-Lseparator.image = image(awful.util.getdir("config").."/imgs/separador2.png")
-Lseparator.resize = false
+separator.image = image(awful.util.getdir("config").."/imgs/separador2.png")
+separator.resize = false
 --}}}
 --{{{    MPC (imagebox+textbox) requiere mpc/mpd
 --------------------------------------------------------------------------------
@@ -274,12 +268,11 @@ function mpc_info()
     end
 end
 --  imagebox
-mpd_ico = widget({ type = "imagebox", align = "left" })
+mpd_ico = widget({ type = "imagebox" })
 createIco(mpd_ico, 'mpd.png', terminal..' -e ncmpcpp')
 --  textbox
 mpcwidget = widget({ type = 'textbox'
                    ,name  = 'mpcwidget'
-                   ,align  = 'flex'
                    })
 -- llamada inicial a la función
 mpcwidget.text = mpc_info()
@@ -287,29 +280,27 @@ mpcwidget.text = mpc_info()
 mpcwidget:buttons({
     button({ }, 1, function ()
         os.execute('mpc play')
-        mpcwidget.mouse_enter()
+        print_mpc()
     end),
     button({ }, 2, function ()
         os.execute('mpc stop')
-        mpcwidget.mouse_enter()
+        print_mpc()
     end),
     button({ }, 3, function ()
         os.execute('mpc pause')
-        mpcwidget.mouse_enter()
+        print_mpc()
     end),
     button({ }, 4, function()
         os.execute('mpc prev')
-        mpc_info()
-        mpcwidget.mouse_enter()
+        print_mpc()
     end),
     button({ }, 5, function()
         os.execute('mpc next')
-        mpc_info()
-        mpcwidget.mouse_enter()
+        print_mpc()
     end),
 })
---  mouse_enter
-mpcwidget.mouse_enter = function()
+-- muestra el track actual
+function print_mpc()
     naughty.destroy(pop)
     local text = pread("mpc; echo ; mpc stats")
     pop = naughty.notify({ title     = '<span color="white">MPC Stats</span>\n'
@@ -322,8 +313,12 @@ mpcwidget.mouse_enter = function()
                          , bg        = beautiful.bg_focus
                          })
 end
+--  mouse_enter
+mpcwidget:add_signal("mouse::enter",function()
+    print_mpc()
+end)
 --  mouse_leave
-mpcwidget.mouse_leave = function() naughty.destroy(pop) end
+mpcwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --}}}
 --{{{    Memory (imagebox+textbox+progressbar)
 --------------------------------------------------------------------------------
@@ -350,41 +345,29 @@ function activeram()
     used = string.format("%.0fMB",(active/1024))
     percent = string.format("%.0f",(active/total)*100)
     if membarwidget then
-        membarwidget:bar_data_add('mem', percent)
+        membarwidget:set_value(percent/100)
     end
     return used..'('..percent..'%)'
 end
 --  imagebox
-mem_ico = widget({ type = "imagebox", align = "right" })
+mem_ico = widget({ type = "imagebox" })
 createIco(mem_ico,'mem.png', terminal..' -e htop')
 --  textbox
 memwidget = widget({ type = 'textbox'
                    , name = 'memwidget'
-                   , align = 'right'
                    })
 --  progressbar
-membarwidget = widget({ type = 'progressbar'
-                      , name = 'membarwidget'
-                      , align = 'right'
-                      })
-membarwidget.width = 50
-membarwidget.height = 0.8
-membarwidget.gap = 5
-membarwidget.ticks_count = 20
-membarwidget.ticks_gap = 1
-membarwidget:bar_properties_set('mem', { bg = '#222222'
-                                       , fg = '#00FF00'
-                                       , fg_center = '#777700'
-                                       , fg_end = '#FF0000'
-                                       , fg_off = '#222222'
-                                       , reverse = false
-                                       , max_value = 100
-                                       , border_color = '#FFFFFF'
-                                       })
+membarwidget = awful.widget.progressbar()
+membarwidget:set_width(40)
+membarwidget:set_height(13)
+membarwidget:set_background_color('black')
+membarwidget:set_border_color('white')
+membarwidget:set_gradient_colors({'green', 'red'})
+awful.widget.layout.margins[membarwidget.widget] = { top = 1, bottom = 1 }
 --  Llamada inicial a la función
 memwidget.text = activeram()
 --  mouse_enter
-memwidget.mouse_enter = function()
+memwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = pread("free -tm")
     pop = naughty.notify({  title  = '<span color="white">Free</span>\n'
@@ -396,9 +379,9 @@ memwidget.mouse_enter = function()
                          , position   = "bottom_right"
                          , bg         = beautiful.bg_focus
                          })
-    end
+    end)
 --  mouse_leave
-memwidget.mouse_leave = function() naughty.destroy(pop) end
+memwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 ---}}}
 --{{{    Swap (imagebox+textbox)
 --------------------------------------------------------------------------------
@@ -421,17 +404,16 @@ function activeswap()
     return string.format("%.0fMB",(active/1024))..'('..string.format("%.0f%%",(active/total)*100)..')'
 end
 --  imagebox
-swp_ico = widget({ type = "imagebox", align = "right" })
+swp_ico = widget({ type = "imagebox" })
 createIco(swp_ico,'swp.png', terminal..' -e htop')
 --  textbox
 swpwidget = widget({ type = 'textbox'
                    , name = 'swpwidget'
-                   , align = 'right'
                    })
 --  llamada inicial a la función
 swpwidget.text = activeswap()
 --  mouse_enter
-swpwidget.mouse_enter = function()
+swpwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = fread("/proc/meminfo")
     pop = naughty.notify({  title  = '<span color="white">/proc/meminfo</span>\n'
@@ -442,9 +424,9 @@ swpwidget.mouse_enter = function()
                          , position   = "bottom_right"
                          , bg         = beautiful.bg_focus
                          })
-    end
+    end)
 --  mouse_leave
-swpwidget.mouse_leave = function() naughty.destroy(pop) end
+swpwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --}}}
 --{{{    Cpu (imagebox+textbox+graph)
 --------------------------------------------------------------------------------
@@ -484,7 +466,7 @@ function cpu_info()
         return "No hay cpus en /proc/stat"
     end
     if cpugraphwidget and cpu[0].res then
-        cpugraphwidget:plot_data_add('cpu', cpu[0].res)
+        cpugraphwidget:add_value(cpu[0].res)
     end
     info = ''
     for s = 0, #cpu do
@@ -500,32 +482,26 @@ function cpu_info()
     return info
 end
 --  imagebox
-cpu_ico = widget({ type = "imagebox", align = "right" })
+cpu_ico = widget({ type = "imagebox" })
 createIco(cpu_ico,'cpu.png', terminal..' -e htop')
 --  textbox
 cpuwidget = widget({ type = 'textbox'
                    , name = 'cpuwidget'
-                   , align = 'right'
                    })
 --  graph
-cpugraphwidget = widget({ type = 'graph'
-                , name = 'cpugraphwidget'
-                , align = 'right'
-                })
-cpugraphwidget.height = 0.8
-cpugraphwidget.width = 40
-cpugraphwidget.bg = '#222222'
-cpugraphwidget.border_color = '#FFFFFF'
-cpugraphwidget.grow = 'left'
-cpugraphwidget:plot_properties_set('cpu', { fg = '#00FF00'
-                                , fg_center = '#777700'
-                                , fg_end = '#FF0000'
-                                , vertical_gradient = true
-                                })
+cpugraphwidget = awful.widget.graph()
+cpugraphwidget:set_width(40)
+cpugraphwidget:set_height(13)
+cpugraphwidget:set_max_value(100)
+cpugraphwidget:set_background_color('black')
+cpugraphwidget:set_border_color('white')
+cpugraphwidget:set_gradient_angle(0)
+cpugraphwidget:set_gradient_colors({'red', 'green'})
+awful.widget.layout.margins[cpugraphwidget.widget] = { top = 1, bottom = 1 }
 --  primera llamada a la función
 cpuwidget.text = cpu_info()
 --  mouse_enter
-cpuwidget.mouse_enter = function()
+cpuwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = pread("ps -eo %cpu,%mem,ruser,pid,comm --sort -%cpu | head -20")
     pop = naughty.notify({ title     = '<span color="white">Processes</span>\n'
@@ -536,9 +512,9 @@ cpuwidget.mouse_enter = function()
                          , position  = "bottom_right"
                          , bg        = beautiful.bg_focus
                          })
-end
+end)
 --  mouse_leave
-cpuwidget.mouse_leave = function() naughty.destroy(pop) end
+cpuwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --}}}
 --{{{    FileSystem (imagebox+textbox)
 --------------------------------------------------------------------------------
@@ -570,17 +546,16 @@ function fs_info()
 end
 
 --  imagebox
-fs_ico = widget({ type = "imagebox", align = "right" })
+fs_ico = widget({ type = "imagebox" })
 createIco(fs_ico,'fs.png', terminal..' -e fdisk -l')
 --  textbox
 fswidget = widget({ type = 'textbox'
                   , name = 'fswidget'
-                  , align = 'right'
                   })
 --  primera llamada a la función
 fswidget.text = fs_info()
 --  mouse_enter
-fswidget.mouse_enter = function()
+fswidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = pread("df -ha")
     pop = naughty.notify({ title      = '<span color="white">Disk Usage</span>'
@@ -592,9 +567,9 @@ fswidget.mouse_enter = function()
                          , position   = "bottom_right"
                          , bg         = beautiful.bg_focus
                          })
-end
+end)
 --  mouse_leave
-fswidget.mouse_leave = function() naughty.destroy(pop) end
+fswidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --}}}
 --{{{    Net (imagebox+textbox)
 --------------------------------------------------------------------------------
@@ -634,17 +609,16 @@ function net_info()
     return iface..'<span color="white">↓</span>'..string.format("%04d%2s",rx,rxu)..'<span color="white">↑</span>'..string.format("%04d%2s",tx,txu)
 end
 --  imagebox
-net_ico = widget({ type = "imagebox", align = "right" })
+net_ico = widget({ type = "imagebox" })
 createIco(net_ico,'net-wired.png', terminal..' -e netstat -ltunpp')
 --  textbox
 netwidget = widget({ type = 'textbox'
                    , name = 'netwidget'
-                   , align = 'right'
                    })
 --  primera llamada a la función
 netwidget.text = net_info()
 --  mouse_enter
-netwidget.mouse_enter = function()
+netwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local listen = pread("netstat -patun 2>&1 | awk '/ESTABLISHED/{ if ($4 !~ /127.0.0.1|localhost/) print  \"(\"$7\")\t\"$5}'")
     pop = naughty.notify({ title      = '<span color="white">Established</span>\n'
@@ -656,9 +630,9 @@ netwidget.mouse_enter = function()
                          , width      = 350
                          , bg         = beautiful.bg_focus
                          })
-end
+end)
 -- mouse_leave
-netwidget.mouse_leave = function() naughty.destroy(pop) end
+netwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --}}}
 --{{{    Load (magebox+textbox)
 --------------------------------------------------------------------------------
@@ -669,17 +643,17 @@ function avg_load()
     return  n:sub(1,pos-1)
 end
 --  imagebox
-load_ico = widget({ type = "imagebox", align = "right" })
+load_ico = widget({ type = "imagebox" })
 createIco(load_ico,'load.png', terminal..' -e htop')
 --  textbox
 loadwidget = widget({ type = 'textbox'
                     , name = 'loadwidget'
-                    , align = 'right'
                     })
 -- llamada inicial a la función
 loadwidget.text = avg_load()
+
 --  mouse_enter
-loadwidget.mouse_enter = function()
+loadwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = pread("uptime; echo; who")
     pop = naughty.notify({ title  = '<span color="white">Uptime</span>\n'
@@ -691,9 +665,9 @@ loadwidget.mouse_enter = function()
                          , position   = "bottom_right"
                          , bg         = beautiful.bg_focus
                          })
-end
+end)
 -- mouse_leave
-loadwidget.mouse_leave = function() naughty.destroy(pop) end
+loadwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --}}}
 --{{{    Volume (Custom) requiere alsa-utils
 --------------------------------------------------------------------------------
@@ -720,12 +694,11 @@ function get_vol()
     end
 end
 --  imagebox
-vol_ico = widget({ type = "imagebox", align = "left" })
+vol_ico = widget({ type = "imagebox" })
 createIco(vol_ico,'vol.png', terminal..' -e alsamixer')
 --  textbox
 volwidget = widget({ type = 'textbox'
                       , name = 'volwidget'
-                      , align = 'left'
                       })
 --  primera llamada a la función
 volwidget.text = get_vol()
@@ -741,49 +714,90 @@ volwidget:buttons({
     end),
 })
 --}}}
+--{{{    Timers
+--------------------------------------------------------------------------------
+
+--  Hook every sec
+timer1 = timer { timeout = 1 }
+timer1:add_signal("timeout", function()
+    cpuwidget.text = cpu_info()
+    loadwidget.text = avg_load()
+    netwidget.text = net_info()
+end)
+timer1:start()
+
+-- Hook called every 5 secs
+timer5 = timer { timeout = 5 }
+timer5:add_signal("timeout", function()
+    volwidget.text = get_vol()
+    memwidget.text = activeram()
+    swpwidget.text = activeswap()
+    mpcwidget.text = mpc_info()
+end)
+timer5:start()
+
+--  Hook every 30 secs
+timer30 = timer { timeout = 30 }
+timer30:add_signal("timeout", function()
+    if batterywidget then batterywidget.text = bat_info() end
+    mailwidget.text = check_gmail()
+end)
+timer30:start()
+
+-- Hook called every minute
+timer60 = timer { timeout = 60 }
+timer60:add_signal("timeout", function()
+    getMail()
+    fswidget.text = fs_info()
+end)
+timer60:start()
+--}}}
 --{{{    Wibox
 --------------------------------------------------------------------------------
 for s = 1, screen.count() do
     -- Defino la barra
     statusbar = {}
     -- La creo
-    statusbar[s] = wibox({ position = "bottom"
+    statusbar[s] = awful.wibox({ position = "bottom"
                          , fg = beautiful.fg_normal
                          , bg = beautiful.bg_normal
                          , border_color = beautiful.border_normal
                          , height = 15
-                         , border_width = 2
+                         , border_width = 1
                          })
     -- Le enchufo los widgets
-    statusbar[s].widgets = { vol_ico
-                           , volwidget
-                           , volwidget and Lseparator or nil
-                           , mpd_ico
-                           , mpcwidget
-                           , Rseparator
-                           , mail_ico
-                           , mailwidget
-                           , mailwidget and Rseparator or nil
-                           , load_ico
-                           , loadwidget
-                           , Rseparator
-                           , cpu_ico
-                           , cpuwidget
-                           , cpugraphwidget
-                           , mem_ico
-                           , memwidget
-                           , membarwidget
-                           , swp_ico
-                           , swpwidget
-                           , Rseparator
-                           , bat_ico
-                           , batterywidget
-                           , batterywidget and Rseparator or nil
-                           , fs_ico
-                           , fswidget
-                           , Rseparator
-                           , net_ico
+    statusbar[s].widgets = {    { vol_ico
+                                , volwidget
+                                , volwidget and separator or nil
+                                , mpd_ico
+                                , mpcwidget
+                                , layout = awful.widget.layout.horizontal.leftright
+                                }
                            , netwidget
+                           , net_ico
+                           , separator
+                           , fswidget
+                           , fs_ico
+                           , batterywidget and separator or nil
+                           , batterywidget
+                           , bat_ico
+                           , separator
+                           , swpwidget
+                           , swp_ico
+                           , membarwidget.widget
+                           , memwidget
+                           , mem_ico
+                           , cpugraphwidget.widget
+                           , cpuwidget
+                           , cpu_ico
+                           , separator
+                           , loadwidget
+                           , load_ico
+                           , mailwidget and separator or nil
+                           , mailwidget
+                           , mail_ico
+                           , separator
+                           , layout = awful.widget.layout.horizontal.rightleft
                            }
     -- La asigno.
     statusbar[s].screen = s

@@ -10,150 +10,153 @@ f_mensaje() {
         if [ ! -z "${MSG[0]}" ]; then echo -e '\E[48;32m'"\033[1m#\n|=-> ${MSG[0]}\n#\033[0m"; fi
         if [ ! -z "${MSG[1]}" ]; then echo -e '\E[48;33m'"\033[1m#\n|=-> ${MSG[1]}\n#\033[0m"; fi
         if [ ! -z "${MSG[2]}" ]; then echo -e '\E[48;31m'"\033[1m#\n|=-> ${MSG[2]}\n#\033[0m"; fi
-	unset MSG
+    unset MSG
 }
 
 f_subs() {
-	for i in $USUB; do 
-		if [ ! -f ${ID_LENGTH}_subs_${i}.idx ] && [ ! -f ${ID_LENGTH}_subs_${i}.sub ]
-			then
-				MSG=("Extrayendo el SID ("${i}") en los ficheros "${ID_LENGTH}"_subs_"${i}".idx y "${ID_LENGTH}"_subs_"${i}".sub" "" ""); f_mensaje
-				mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
-				-vobsubout ${ID_LENGTH}_subs_${i} \
-				-nosound -ovc frameno -o /dev/null -vobsuboutindex ${i} -sid ${i}
-				if [ ${?} = "0" ]
-					then MSG=("Los ficheros "${ID_LENGTH}"_subs_"${i}".idx y "${ID_LENGTH}"_subs_"${i}".sub se han extraido correctamente" "" ""); f_mensaje
-					else MSG=("" "" "("${?}") Hubo un error procesando "${ID_LENGTH}"_subs_"${i}".idx y "${ID_LENGTH}"_subs_"${i}".sub"); f_mensaje
-				fi
-			else MSG=("" "Los ficheros "${ID_LENGTH}"_subs_"${i}".idx y/o "${ID_LENGTH}"_subs_"${i}".sub ya existen, no se crearán otros." ""); f_mensaje
-		fi
-	done
+    for i in $USUB; do 
+        if [ ! -f ${ID_LENGTH}_subs_${i}.idx ] && [ ! -f ${ID_LENGTH}_subs_${i}.sub ]
+            then
+                MSG=("Extrayendo el SID ("${i}") en los ficheros "${ID_LENGTH}"_subs_"${i}".idx y "${ID_LENGTH}"_subs_"${i}".sub" "" ""); f_mensaje
+                mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
+                -vobsubout ${ID_LENGTH}_subs_${i} \
+                -nosound -ovc frameno -o /dev/null -vobsuboutindex ${i} -sid ${i}
+                if [ ${?} = "0" ]
+                    then MSG=("Los ficheros "${ID_LENGTH}"_subs_"${i}".idx y "${ID_LENGTH}"_subs_"${i}".sub se han extraido correctamente" "" ""); f_mensaje
+                    else MSG=("" "" "("${?}") Hubo un error procesando "${ID_LENGTH}"_subs_"${i}".idx y "${ID_LENGTH}"_subs_"${i}".sub"); f_mensaje
+                fi
+            else MSG=("" "Los ficheros "${ID_LENGTH}"_subs_"${i}".idx y/o "${ID_LENGTH}"_subs_"${i}".sub ya existen, no se crearán otros." ""); f_mensaje
+        fi
+    done
 }
 
 f_audio() {
-	for i in $UAUD; do
-		if [ ! -f ${ID_LENGTH}_audio_${i}.aac ]
-			then
-				MSG=("Estrayendo el AID ("${i}") con el nombre "${ID_LENGTH}"_audio_"${i}".aac" "" ""); f_mensaje
-				mencoder dvd://${LT} -dvd-device ${DVDEV} -o ${ID_LENGTH}_audio_${i}.aac ${EXARGS} \
-				-nosound -ovc frameno -of rawaudio -aid ${i} -oac faac -faacopts mpeg=4:br=${AUDBR}:object=2
-				if [ ${?} = "0" ]
-					then MSG=("El fichero "${ID_LENGTH}"_audio_"${i}".aac se ha extraido correctamente" "" ""); f_mensaje
-					else MSG=("" "" "("${?}") Hubo un error procesando "${ID_LENGTH}"_audio_"${i}".aac"); f_mensaje
-				fi
-			else MSG=("" "El fichero "${ID_LENGTH}"_audio_"${i}".aac ya existe, no se creará otro." ""); f_mensaje
-		fi
-	done
+    for i in $UAUD; do
+        if [ ! -f ${ID_LENGTH}_audio_${i}.aac ]
+            then
+                MSG=("Estrayendo el AID ("${i}") con el nombre "${ID_LENGTH}"_audio_"${i}".aac" "" ""); f_mensaje
+                mencoder dvd://${LT} -dvd-device ${DVDEV} -o ${ID_LENGTH}_audio_${i}.aac ${EXARGS} \
+                -nosound -ovc frameno -of rawaudio -aid ${i} -oac faac -faacopts mpeg=4:br=${AUDBR}:object=2
+                if [ ${?} = "0" ]
+                    then MSG=("El fichero "${ID_LENGTH}"_audio_"${i}".aac se ha extraido correctamente" "" ""); f_mensaje
+                    else MSG=("" "" "("${?}") Hubo un error procesando "${ID_LENGTH}"_audio_"${i}".aac"); f_mensaje
+                fi
+            else MSG=("" "El fichero "${ID_LENGTH}"_audio_"${i}".aac ya existe, no se creará otro." ""); f_mensaje
+        fi
+    done
 }
 
 f_chaps() {
-	if [ ! -f ${ID_LENGTH}_chapters.txt ]
-		then
-			dvdxchap -t ${LT} ${DVDEV} > ${ID_LENGTH}_chapters.txt
-			if [ ${?} = "0" ]
-				then MSG=("El fichero "${ID_LENGTH}"_chapters.txt se ha extraido correctamente" "" ""); f_mensaje
-				else MSG=("" "" "("${?}") Hubo un error procesando "${ID_LENGTH}"_chapters.txt"); f_mensaje
-			fi
-		else MSG=("" "El fichero "${ID_LENGTH}"_chapters.txt ya existe, no se creará otro." ""); f_mensaje
-	fi
+    if [ ! -f ${ID_LENGTH}_chapters.txt ]
+        then
+            dvdxchap -t ${LT} ${DVDEV} > ${ID_LENGTH}_chapters.txt
+            if [ ${?} = "0" ]
+                then MSG=("El fichero "${ID_LENGTH}"_chapters.txt se ha extraido correctamente" "" ""); f_mensaje
+                else MSG=("" "" "("${?}") Hubo un error procesando "${ID_LENGTH}"_chapters.txt"); f_mensaje
+            fi
+        else MSG=("" "El fichero "${ID_LENGTH}"_chapters.txt ya existe, no se creará otro." ""); f_mensaje
+    fi
 }
 
 f_1p() {
-	if [ ! -f ${ID_LENGTH}_video.avi ]
-		then
-			MSG=("Comenzando la conversión..." "" ""); f_mensaje
-			time nice -19 mencoder dvd://${LT} -dvd-device $DVDEV ${EXARGS} \
-				-o ${ID_LENGTH}_video.avi \
-				-vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
-				-nosound -vc mpeg12 -of avi -ovc x264 \
-				-x264encopts crf=22:threads=auto:ssim:psnr:subq=4:bframes=2:b_pyramid:weight_b
-			if [ ${?} = "0" ]
-				then MSG=("El fichero "${ID_LENGTH}"_video.avi se ha creado correctamente" "" ""); f_mensaje
-				else MSG=("" "" "("${?}") Hubo un error procesando "${ID_LENGTH}"_video.avi"); f_mensaje
-			fi
-		else MSG=("" "El fichero "${ID_LENGTH}"_video.avi ya existe, no se creará otro." ""); f_mensaje
-	fi	
+    if [ ! -f ${ID_LENGTH}_video.avi ]
+        then
+            MSG=("Comenzando la conversión..." "" ""); f_mensaje
+            time nice -19 mencoder dvd://${LT} -dvd-device $DVDEV ${EXARGS} \
+                -o ${ID_LENGTH}_video.avi \
+                -vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
+                -nosound -vc mpeg12 -of avi -ovc x264 \
+                -x264encopts crf=22:threads=auto:ssim:psnr:subq=4:bframes=2:b_pyramid:weight_b
+            if [ ${?} = "0" ]
+                then MSG=("El fichero "${ID_LENGTH}"_video.avi se ha creado correctamente" "" ""); f_mensaje
+                else MSG=("" "" "("${?}") Hubo un error procesando "${ID_LENGTH}"_video.avi"); f_mensaje
+            fi
+        else MSG=("" "El fichero "${ID_LENGTH}"_video.avi ya existe, no se creará otro." ""); f_mensaje
+    fi  
 }
 
 f_2p() {
-	if [ ! -f ${ID_LENGTH}_video.avi ] && [ ! -f ${ID_LENGTH}_pass.txt ]
-		then
-			MSG=("Comenzando la 1ra pasada..." "" ""); f_mensaje
-			time nice -19 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
-				-o /dev/null -passlogfile ${ID_LENGTH}_pass.txt \
-				-vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
-				-nosound -vc mpeg12 -of avi -ovc x264 \
-				-x264encopts threads=auto:pass=1:turbo=2:bitrate=${VIDBR}:${FLAGS}
-			if [ ${?} = "0" ]
-				then MSG=("Se ha realizado la 1ra pasada." "" ""); f_mensaje
-				else MSG=("" "" "("${?}") Algo raro ha pasado aqui :("); f_mensaje
-			fi
-			MSG=("Comenzando la 2nda pasada..." "" ""); f_mensaje
-			time nice -19 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
-				-o ${ID_LENGTH}_video.avi -passlogfile ${ID_LENGTH}_pass.txt \
-				-vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
-				-nosound -vc mpeg12 -of avi -ovc x264 \
-				-x264encopts threads=auto:pass=2:bitrate=${VIDBR}:${FLAGS}
-			if [ ${?} = "0" ]
-				then MSG=("Se ha realizado la 2nda pasada." "" ""); f_mensaje
-				else MSG=("" "" "("${?}", Algo raro ha pasado aqui :("); f_mensaje
-			fi
-		else MSG=("" "Los ficheros "${ID_LENGTH}"_video.avi y/o "${ID_LENGTH}"_pass.txt ya existen, no se crearán otros." ""); f_mensaje
-	fi
+    if [ ! -f ${ID_LENGTH}_video.avi ] && [ ! -f ${ID_LENGTH}_pass.txt ]
+        then
+            MSG=("Comenzando la 1ra pasada..." "" ""); f_mensaje
+            time nice -19 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
+                -o /dev/null -passlogfile ${ID_LENGTH}_pass.txt \
+                -vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
+                -nosound -vc mpeg12 -of avi -ovc x264 \
+                -x264encopts threads=auto:pass=1:turbo=2:bitrate=${VIDBR}:${FLAGS}
+            if [ ${?} = "0" ]
+                then MSG=("Se ha realizado la 1ra pasada." "" ""); f_mensaje
+                else MSG=("" "" "("${?}") Algo raro ha pasado aqui :("); f_mensaje
+            fi
+            MSG=("Comenzando la 2nda pasada..." "" ""); f_mensaje
+            time nice -19 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
+                -o ${ID_LENGTH}_video.avi -passlogfile ${ID_LENGTH}_pass.txt \
+                -vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
+                -nosound -vc mpeg12 -of avi -ovc x264 \
+                -x264encopts threads=auto:pass=2:bitrate=${VIDBR}:${FLAGS}
+            if [ ${?} = "0" ]
+                then MSG=("Se ha realizado la 2nda pasada." "" ""); f_mensaje
+                else MSG=("" "" "("${?}", Algo raro ha pasado aqui :("); f_mensaje
+            fi
+        else MSG=("" "Los ficheros "${ID_LENGTH}"_video.avi y/o "${ID_LENGTH}"_pass.txt ya existen, no se crearán otros." ""); f_mensaje
+    fi
 }
 
 f_mkv() {
-	if [ ! -f ${ID_LENGTH}_movie.mkv ]
-			then
-				MSG=("Los siguientes ficheros se agregarán a "${ID_LENGTH}_movie.mkv" usando el contenedor Matroska:""" ""); f_mensaje
-				ls -lha ${ID_LENGTH}_video.avi ${ID_LENGTH}_audio* ${ID_LENGTH}_subs* ${ID_LENGTH}_chapters.txt 2>/dev/null | awk '{print $8" ("$5")"}' 
-				for i in $UAUD; do
-					AACF=${AACF}" --language 0:"`echo ${DVD_ID} | xargs -n1 | grep '${i}' | egrep 'en|es' | sed -e 's/=en/=eng/g' -e 's/=es/=spa/g' | cut -f 2 -d '='`" --aac-is-sbr 0 "${ID_LENGTH}"_audio_"${i}".aac"
-					AACF=$(echo ${AACF} | sed -e 's/0: /0:eng /g') # Si no hemos encontrado lenguaje, forzamos a eng
-				done	
-				if [ -z ${USUB} ]; then SUBF=""; else SUBF=${ID_LENGTH}"_subs_*.idx"; fi
-				mkvmerge --title ${ID_LENGTH} --output-charset UTF-8 -o ${ID_LENGTH}_movie.mkv ${ID_LENGTH}_video.avi ${AACF} ${SUBF} --chapters ${ID_LENGTH}_chapters.txt
-				if [ ${?} = "0" ]
-					then MSG=("El fichero `ls -lha ${ID_LENGTH}_movie.mkv | awk '{print $8" ("$5")"}'` se ha creado correctamente." "" ""); f_mensaje
-					else MSG=("" "" "("${?}") Hubo un error creando "${ID_LENGTH}"_movie.mkv"); f_mensaje
-				fi
-			else MSG=("" "El fichero "${ID_LENGTH}"_movie.mkv ya existe, no se creará otro." ""); f_mensaje
-		fi
+    if [ ! -f ${ID_LENGTH}_movie.mkv ]
+            then
+                MSG=("Los siguientes ficheros se agregarán a "${ID_LENGTH}_movie.mkv" usando el contenedor Matroska:""" ""); f_mensaje
+                ls -lha ${ID_LENGTH}_video.avi ${ID_LENGTH}_audio* ${ID_LENGTH}_subs* ${ID_LENGTH}_chapters.txt 2>/dev/null | awk '{print $8" ("$5")"}' 
+                for i in $UAUD; do
+                    AACF=${AACF}" --language 0:"`echo ${DVD_ID} | xargs -n1 | grep '${i}' | egrep 'en|es' | sed -e 's/=en/=eng/g' -e 's/=es/=spa/g' | cut -f 2 -d '='`" --aac-is-sbr 0 "${ID_LENGTH}"_audio_"${i}".aac"
+                    AACF=$(echo ${AACF} | sed -e 's/0: /0:eng /g') # Si no hemos encontrado lenguaje, forzamos a eng
+                done    
+                if [ -z ${USUB} ]; then SUBF=""; else SUBF=${ID_LENGTH}"_subs_*.idx"; fi
+                mkvmerge --title ${ID_LENGTH} --output-charset UTF-8 -o ${ID_LENGTH}_movie.mkv ${ID_LENGTH}_video.avi ${AACF} ${SUBF} --chapters ${ID_LENGTH}_chapters.txt
+                if [ ${?} = "0" ]
+                    then MSG=("El fichero `ls -lha ${ID_LENGTH}_movie.mkv | awk '{print $8" ("$5")"}'` se ha creado correctamente." "" ""); f_mensaje
+                    else MSG=("" "" "("${?}") Hubo un error creando "${ID_LENGTH}"_movie.mkv"); f_mensaje
+                fi
+            else MSG=("" "El fichero "${ID_LENGTH}"_movie.mkv ya existe, no se creará otro." ""); f_mensaje
+        fi
 }
 
 f_vcrop() {
-	MSG=("El valor de CROP idoneo es "${CROP}", se mostrará el video pra revisarlo. Pulsa dentro la tecla (q) para salir." "" ""); f_mensaje
-	#mplayer -dvd-device $DVDEV dvd://${LT} -ss $(($ID_LENGTH/2)) -nosound -vf crop=${CROP} 2>/dev/null
-	read -n 1 -t 10 -p "Pulsa una tecla para continuar..." EOF
-	mplayer -dvd-device $DVDEV dvd://${LT} -ss $(($ID_LENGTH/2)) -really-quiet -nosound -vf rectangle=${CROP} 2>/dev/null
-	if [ ${?} = "0" ]
-		then MSG=("OK!" "" ""); f_mensaje
-		else MSG=("" "" "("${?}") Algo ha fallado :("); f_mensaje
-	fi
+    MSG=("El valor de CROP idoneo es "${CROP}", se mostrará el video pra revisarlo. Pulsa dentro la tecla (q) para salir." "" ""); f_mensaje
+    read -n 1 -t 10 -p "Pulsa una tecla para continuar..." EOF
+set -x
+    mplayer -dvd-device $DVDEV dvd://${LT} -ss $(($ID_LENGTH/2)) -really-quiet -nosound -vf rectangle=${CROP} 2>/dev/null
+exit 0
+    if [ ${?} = "0" ]
+        then MSG=("OK!" "" ""); f_mensaje
+        else MSG=("" "" "("${?}") Algo ha fallado :("); f_mensaje
+    fi
 }
 
 f_intro() {
-	echo -e '\E[48;35m'"\033[1mRuta del DVD: \033[0m"${DVDEV}" ("`du -sh ${DVDEV} | awk '{print $1}'`")"
-	echo -e '\E[48;35m'"\033[1mPista mas Grande: \033[0m"${LT}", con una duración de "${LT_DUR}
-	echo -e '\E[48;35m'"\033[1mCapítulos: \033[0m"`dvdxchap -t ${LT} ${DVDEV} | grep 'NAME=' | wc -l`
-	echo -e '\E[48;35m'"\033[1mLas pistas de Audio interesantes son: \033[0m"${UAUD}
-	echo ${DVD_ID} | xargs -n1 | grep ^'ID_AID_' | egrep 'en|es' | awk '{print " "$1}'
-	echo -e '\E[48;35m'"\033[1mSe usará el códec AAC con bitrate: \033[0m"${AUDBR}
-	if [ -z "${USUB}" ] 
-		then echo -e '\E[48;33m'"\033[1mNo hay pistas de subtítulos.\033[0m"${USUB}
-		else echo -e '\E[48;35m'"\033[1mLas pistas de subtítulos interesantes son: \033[0m"${USUB}
-			echo ${DVD_ID} | xargs -n1 | grep ^'ID_SID_' | egrep 'en|es' | awk '{print " "$1}'
+    echo -e '\E[48;35m'"\033[1mRuta del DVD: \033[0m"${DVDEV}" ("`du -sh ${DVDEV} | awk '{print $1}'`")"
+    echo -e '\E[48;35m'"\033[1mPista mas Grande: \033[0m"${LT}", con una duración de "${LT_DUR}
+    echo -e '\E[48;35m'"\033[1mCapítulos: \033[0m"`dvdxchap -t ${LT} ${DVDEV} | grep 'NAME=' | wc -l`
+    echo -e '\E[48;35m'"\033[1mLas pistas de Audio interesantes son: \033[0m"${UAUD}
+    echo ${DVD_ID} | xargs -n1 | grep ^'ID_AID_' | egrep 'en|es' | awk '{print " "$1}'
+    echo -e '\E[48;35m'"\033[1mSe usará el códec AAC con bitrate: \033[0m"${AUDBR}
+    if [ -z "${USUB}" ] 
+        then echo -e '\E[48;33m'"\033[1mNo hay pistas de subtítulos.\033[0m"${USUB}
+        else echo -e '\E[48;35m'"\033[1mLas pistas de subtítulos interesantes son: \033[0m"${USUB}
+            echo ${DVD_ID} | xargs -n1 | grep ^'ID_SID_' | egrep 'en|es' | awk '{print " "$1}'
 
-	fi
-	echo -e '\E[48;35m'"\033[1mResolucion original: \033[0m"`echo ${DVD_ID} | xargs -n1 | egrep 'WIDTH|HEIGHT' | cut -f 2 -d "=" | xargs | tr ' ' 'x'`
-	echo -e '\E[48;35m'"\033[1mResolucion estimada tras cortar bordes: \033[0m"`echo ${CROP} | cut -f1,2 -d ':' | tr ':' 'x'`
-	echo -e '\E[48;35m'"\033[1mVideo Bitrate estimado para "${FSIZE}" megas: \033[0m"${VIDBR}
+    fi
+    echo -e '\E[48;35m'"\033[1mResolucion original: \033[0m"`echo ${DVD_ID} | xargs -n1 | egrep 'WIDTH|HEIGHT' | cut -f 2 -d "=" | xargs | tr ' ' 'x'`
+    echo -e '\E[48;35m'"\033[1mResolucion estimada tras cortar bordes: \033[0m"`echo ${CROP} | cut -f1,2 -d ':' | tr ':' 'x'`
+    echo -e '\E[48;35m'"\033[1mVideo Bitrate estimado para "${FSIZE}" megas: \033[0m"${VIDBR}
 }
 #
 #Llenamos Variables:
 #
 DVDEV=$1
-FLAGS=me=umh:me_range=16:nodct_decimate:nointerlaced:8x8dct:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:keyint=250:keyint_min=25:frameref=3:bframes=14:bime:b_adapt:b_pyramid:weight_b:direct_pred=auto:subq=5:nobrdo:chroma_me:cabac:deblock
+#FLAGS=me=umh:me_range=16:nodct_decimate:nointerlaced:8x8dct:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:keyint=250:keyint_min=25:frameref=3:bframes=14:bime:b_adapt:b_pyramid:weight_b:direct_pred=auto:subq=5:nobrdo:chroma_me:cabac:deblock
+FLAGS="me=umh:me_range=24:nodct_decimate:nointerlaced:8x8dct:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:keyint=250:keyint_min=25:psy_rd=0.8,0.2:frameref=4:bframes=5:b_adapt=2:nob_pyramid:weight_b:direct_pred=auto:subq=7:mbtree:chroma_me:cabac:aq_mode=1:deblock:level_idc=41:threads=auto:ssim:psnr"
+
 #EXARGS="-ss 00:10:00 -frames 1500"
 #EXVFARGS="pp=lb,"
 AUDBR="110"
@@ -168,7 +171,7 @@ UAUD=$(echo $DVD_ID | xargs -n1 | grep ^'ID_AID_' | egrep 'en|es' | tr -d '=-z' 
 if [ -z "${UAD}" ] ; then UAUD=$(echo $DVD_ID | xargs -n1 | grep ^'ID_AUDIO_ID' | cut -f2 -d '=' | xargs) ; fi
 if [ -z "${UAD}" ] ; then UAUD="128"; fi
 USUB=$(echo $DVD_ID | xargs -n1 | grep ^'ID_SID_' | egrep 'en|es' | tr -d '=-z' | xargs)
-CROP=$(mplayer -dvd-device ${DVDEV} dvd://${LT} -vf cropdetect -nosound -frames 30 -sstep $((${ID_LENGTH}/30)) -nocache 2>/dev/null | grep 'CROP' | cut -f 2 -d "=" |  sed s/').'//g | uniq -c | sort -rn | egrep -o '[0-9]+:[0-9]+:[0-9]+:[0-9]+' | head -n1)
+CROP=$(mplayer -dvd-device ${DVDEV} dvd://${LT} -vf cropdetect -nosound -vo null -vc mpeg12 -frames 30 -sstep $((${ID_LENGTH}/30)) -nocache 2>/dev/null | grep 'CROP' | cut -f 2 -d "=" |  sed s/').'//g | uniq -c | sort -rn | egrep -o '[0-9]+:[0-9]+:[0-9]+:[0-9]+' | head -n1)
 VIDBR=$(($((${FSIZE}*8192/${ID_LENGTH}))-${AUDBR}))
 #
 #Vamos a lo que vamos:
@@ -186,12 +189,12 @@ MSG=("OK!" "" ""); f_mensaje
 #
 #Chatarra:
 #
-#	-x264encopts pass=1:bitrate=1000:turbo=2:me=umh:me_range=16:nodct_decimate:nointerlaced:8x8dct:threads=auto:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:bime:frameref=3:bframes=14:b_adapt:b_pyramid:weight_b:direct_pred=auto:subq=5:nobrdo:chroma_me:cabac:deblock:ssim:psnr:cqm=./mp4guy_hrm_matrix
-#	-x264encopts pass=1:bitrate=1500:turbo=2:me=umh:me_range=24:nodct_decimate:nointerlaced:8x8dct:threads=auto:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:bime:frameref=4:bframes=16:b_adapt:b_pyramid:weight_b:direct_pred=auto:subq=6:brdo:chroma_me:cabac:deblock:ssim:psnr:cqm=./mp4guy_hrm_matrix
-#	-x264encopts bitrate=1500:threads=auto:ssim:psnr:cqm=./mp4guy_hrm_matrix:turbo=2:pass=1:subq=6:partitions=all:8x8dct:me=umh:frameref=5:bframes=3:b_pyramid:weight_b
+#   -x264encopts pass=1:bitrate=1000:turbo=2:me=umh:me_range=16:nodct_decimate:nointerlaced:8x8dct:threads=auto:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:bime:frameref=3:bframes=14:b_adapt:b_pyramid:weight_b:direct_pred=auto:subq=5:nobrdo:chroma_me:cabac:deblock:ssim:psnr:cqm=./mp4guy_hrm_matrix
+#   -x264encopts pass=1:bitrate=1500:turbo=2:me=umh:me_range=24:nodct_decimate:nointerlaced:8x8dct:threads=auto:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:bime:frameref=4:bframes=16:b_adapt:b_pyramid:weight_b:direct_pred=auto:subq=6:brdo:chroma_me:cabac:deblock:ssim:psnr:cqm=./mp4guy_hrm_matrix
+#   -x264encopts bitrate=1500:threads=auto:ssim:psnr:cqm=./mp4guy_hrm_matrix:turbo=2:pass=1:subq=6:partitions=all:8x8dct:me=umh:frameref=5:bframes=3:b_pyramid:weight_b
 #mencoder dvd://${LT} -dvd-device ${DVDEV} \
-#	-x264encopts pass=2:bitrate=1000:me=umh:me_range=16:nodct_decimate:nointerlaced:8x8dct:threads=auto:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:bime:frameref=3:bframes=14:b_adapt:b_pyramid:weight_b:direct_pred=auto:subq=5:nobrdo:chroma_me:cabac:deblock:ssim:psnr:cqm=./mp4guy_hrm_matrix           
-# 	-x264encopts bitrate=1500:threads=auto:ssim:psnr:cqm=./mp4guy_hrm_matrix:pass=2:subq=6:partitions=all:8x8dct:me=umh:frameref=5:bframes=3:b_pyramid:weight_b
+#   -x264encopts pass=2:bitrate=1000:me=umh:me_range=16:nodct_decimate:nointerlaced:8x8dct:threads=auto:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:bime:frameref=3:bframes=14:b_adapt:b_pyramid:weight_b:direct_pred=auto:subq=5:nobrdo:chroma_me:cabac:deblock:ssim:psnr:cqm=./mp4guy_hrm_matrix
+#   -x264encopts bitrate=1500:threads=auto:ssim:psnr:cqm=./mp4guy_hrm_matrix:pass=2:subq=6:partitions=all:8x8dct:me=umh:frameref=5:bframes=3:b_pyramid:weight_b
 #awk 'BEGIN {print int(((576*(4/3)*560)/688)/16)*16 }'
 # harddup tiene que estar por pelotas, hace que no se salten los frames y se 'hardcodeen' en el stream para evitar desync
 #-vf pullup,softskip,crop=${CROP},harddup
@@ -204,3 +207,9 @@ MSG=("OK!" "" ""); f_mensaje
 #mencoder dvd://${LT} -dvd-device ${DVDEV} -ovc frameno -o /dev/null -alang en:es -oac faac -faacopts mpeg=4:br=110:object=2
 #mkvmerge --title "BLADE RUNNER" -o 6768.mkv --chapters 6768_chapters.txt 6768_video.avi 6768_subs.
 # -ss 00:10:00 -frames 1500 \
+
+
+
+#nice -n 10 /usr/bin/mencoder video_ts.bup -o /dev/null -passlogfile /home/oscar/.h264enc/job7197/video_ts.log -vf softskip,harddup -oac faac -faacopts mpeg=4:br=110:object=2 -ovc x264 -x264encopts pass=1:bitrate=1000:turbo=2:me=umh:me_range=24:nodct_decimate:nointerlaced:8x8dct:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:keyint=250:keyint_min=25:psy_rd=0.8,0.2:frameref=4:bframes=5:b_adapt=2:nob_pyramid:weight_b:direct_pred=auto:subq=7:mbtree:chroma_me:cabac:aq_mode=1:deblock:level_idc=41:threads=auto:ssim:psnr
+
+#nice -n 10 /usr/bin/mencoder video_ts.bup -o /home/oscar/h264enc_7197/video_ts.avi -passlogfile /home/oscar/.h264enc/job7197/video_ts.log -vf softskip,harddup -oac faac -faacopts mpeg=4:br=110:object=2 -ovc x264 -x264encopts pass=2:bitrate=1000:me=umh:me_range=24:nodct_decimate:nointerlaced:8x8dct:nofast_pskip:trellis=1:partitions=p8x8,b8x8,i8x8,i4x4:mixed_refs:keyint=250:keyint_min=25:psy_rd=0.8,0.2:frameref=4:bframes=5:b_adapt=2:nob_pyramid:weight_b:direct_pred=auto:subq=7:mbtree:chroma_me:cabac:aq_mode=1:deblock:level_idc=41:threads=auto:ssim:psnr
