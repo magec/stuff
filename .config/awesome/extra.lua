@@ -46,7 +46,7 @@ function createIco(widget,file,click)
     awful.widget.layout.margins[widget] = { top = 1, bottom = 1, left = 1, right = 1 }
     widget:buttons(awful.util.table.join(
         awful.button({ }, 1, function ()
-            os.execute(click)
+            awful.util.spawn(click,false)
         end)
     ))
 end
@@ -60,14 +60,25 @@ function bytestoh(bytes)
     return v or bytes,u or "B"
 end
 -- Crea, muestra y esconde clientes flotantes
-dropdown = {}
-function dropdown_toggle(prog)
-    screen = mouse.screen
+-- http://awesome.naquadah.org/wiki/Drop-down_terminal
+local capi = {
+    mouse = mouse,
+    client = client,
+    screen = screen
+}
+local dropdown = {}
+-- Create a new window for the drop-down application when it doesn't
+-- exist, or toggle between hidden and visible states when it does
+function toggle(prog,height,sticky,screen)
+    local height = height or 0.3 -- 30%
+    local sticky = sticky or false
+    local screen = screen or capi.mouse.screen
+
     if not dropdown[prog] then
-        -- Create table
         dropdown[prog] = {}
-        -- Add unmanage hook for dropdown programs
-        awful.hooks.unmanage.register(function (c)
+
+        -- Add unmanage signal for teardrop programs
+        capi.client.add_signal("unmanage", function (c)
             for scr, cl in pairs(dropdown[prog]) do
                 if cl == c then
                     dropdown[prog][scr] = nil
@@ -75,39 +86,61 @@ function dropdown_toggle(prog)
             end
         end)
     end
+
     if not dropdown[prog][screen] then
         spawnw = function (c)
-            -- Store client
             dropdown[prog][screen] = c
-            -- Float client
+
+            -- Teardrop clients are floaters
             awful.client.floating.set(c, true)
-            -- Mark terminal as ontop
+
+            -- Client geometry
+            local screengeom = capi.screen[screen].workarea
+
+            if height < 1 then
+                height = screengeom.height * height
+            else
+                height = screengeom.height
+            end
+
+            -- Client properties
+            c:geometry({ x = screengeom.x/2, y = 0, width = screengeom.width, height = height })
             c.ontop = true
             c.above = true
-            -- Focus and raise client
+            c.skip_taskbar = true
+            if sticky then c.sticky = true end
+            if c.titlebar then awful.titlebar.remove(c) end
+
             c:raise()
-            client.focus = c
-            -- Remove hook
-            awful.hooks.manage.unregister(spawnw)
+            capi.client.focus = c
+            capi.client.remove_signal("manage", spawnw)
         end
-        -- Add hook
-        awful.hooks.manage.register(spawnw)
-        -- Spawn program
-        awful.util.spawn(prog)
+
+        -- Add manage signal and spawn the program
+        capi.client.add_signal("manage", spawnw)
+        awful.util.spawn(prog, false)
     else
-        -- Get client
+        -- Get a running client
         c = dropdown[prog][screen]
-        -- Focus and raise if not hidden
-        if c.hide then
-            c.hide = false
-            c:raise()
-            client.focus = c
-        -- solo lo esconderemos si ya está en nuestro tag
-        elseif c:tags()[1] ==  awful.tag.selected(screen) then
-            c.hide = true
-        end
+
         -- Switch the client to the current workspace
-        awful.client.movetotag(awful.tag.selected(screen), c)
+        if c:isvisible() == false then c.hidden = true;
+            awful.client.movetotag(awful.tag.selected(screen), c)
+        end
+
+        -- Focus and raise if hidden
+        if c.hidden then
+            c.hidden = false
+            c:raise()
+            capi.client.focus = c
+        else -- Hide and detach tags if not
+            c.hidden = true
+            local ctags = c:tags()
+            for i, v in pairs(ctags) do
+                ctags[i] = nil
+            end
+            c:tags(ctags)
+        end
     end
 end
 --}}}
@@ -117,8 +150,8 @@ end
 mailadd  = 'oprietop@intranet.uoc.edu'
 mailpass = escape(fread(confdir..mailadd..'.passwd'))
 mailurl  = 'https://mail.google.com/a/intranet.uoc.edu/feed/atom/unread'
--- mailurl  = 'https://mail.google.com/feed/atom/unread'
---  Actualiza el estadop del widget a partir de un feed de gmail bajado.
+--  mailurl  = 'https://mail.google.com/feed/atom/unread'
+--  Actualiza el estado del widget a partir de un feed de gmail bajado.
 function check_gmail()
     local feed = fread(confdir..mailadd)
     if not feed or feed == '' then
@@ -173,12 +206,12 @@ end)
 --  mouse_leave
 mailwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --  buttons
-mailwidget:buttons({
-    button({ }, 1, function ()
+mailwidget:buttons(awful.util.table.join(
+    awful.button({ }, 1, function ()
         getMail()
         os.execute('opera "'..mailurl..'"&')
-    end),
-})
+    end)
+))
 --}}}
 --{{{    Bateria (texto)
 --------------------------------------------------------------------------------
@@ -277,28 +310,28 @@ mpcwidget = widget({ type = 'textbox'
 -- llamada inicial a la función
 mpcwidget.text = mpc_info()
 -- textbox buttons
-mpcwidget:buttons({
-    button({ }, 1, function ()
+mpcwidget:buttons(awful.util.table.join(
+    awful.button({ }, 1, function ()
         os.execute('mpc play')
         print_mpc()
     end),
-    button({ }, 2, function ()
+    awful.button({ }, 2, function ()
         os.execute('mpc stop')
         print_mpc()
     end),
-    button({ }, 3, function ()
+    awful.button({ }, 3, function ()
         os.execute('mpc pause')
         print_mpc()
     end),
-    button({ }, 4, function()
+    awful.button({ }, 4, function()
         os.execute('mpc prev')
         print_mpc()
     end),
-    button({ }, 5, function()
+    awful.button({ }, 5, function()
         os.execute('mpc next')
         print_mpc()
-    end),
-})
+    end)
+))
 -- muestra el track actual
 function print_mpc()
     naughty.destroy(pop)
@@ -703,18 +736,18 @@ volwidget = widget({ type = 'textbox'
 --  primera llamada a la función
 volwidget.text = get_vol()
 --  buttons
-volwidget:buttons({
-    button({ }, 4, function()
+volwidget:buttons(awful.util.table.join(
+    awful.button({ }, 4, function()
         os.execute('amixer -c 0 set '..sdev..' 3dB+');
         volwidget.text = get_vol()
     end),
-    button({ }, 5, function()
+    awful.button({ }, 5, function()
         os.execute('amixer -c 0 set '..sdev..' 3dB-');
         volwidget.text = get_vol()
-    end),
-})
+    end)
+))
 --}}}
---{{{    Timers
+--{{{   Timers
 --------------------------------------------------------------------------------
 
 --  Hook every sec

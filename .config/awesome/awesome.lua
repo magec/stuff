@@ -6,6 +6,7 @@ require("awful.rules")
 require("beautiful")
 -- Notification library
 require("naughty")
+--require("teardrop")
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
@@ -209,8 +210,9 @@ globalkeys = awful.util.table.join(
 --
 --  Aquí enchufo mis teclas
 --
-    awful.key({ modkey,           }, "#49",  function () dropdown_toggle(terminal) end), -- tecla º
-    awful.key({ modkey,           }, "#107", function () dropdown_toggle('scrot -e gqview') end), -- tecla Print Screen
+--    awful.key({ modkey,           }, "#49",  function () dropdown_toggle(terminal) end), -- tecla º
+    awful.key({ modkey,           }, "#49",  function () toggle(terminal) end), -- tecla º
+    awful.key({ modkey,           }, "#107", function () toggle('scrot -e gqview') end), -- tecla Print Screen
     awful.key({ modkey, "Control" }, "w", function () awful.util.spawn(setrndwall) end),
     awful.key({ modkey, "Control" }, "q", function () awful.util.spawn(setwall) end),
     awful.key({ modkey, "Control" }, "t", function () awful.util.spawn('thunar') end),

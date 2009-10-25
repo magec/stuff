@@ -62,7 +62,7 @@ f_1p() {
     if [ ! -f ${ID_LENGTH}_video.avi ]
         then
             MSG=("Comenzando la conversión..." "" ""); f_mensaje
-            time nice -19 mencoder dvd://${LT} -dvd-device $DVDEV ${EXARGS} \
+            time nice -n 10 mencoder dvd://${LT} -dvd-device $DVDEV ${EXARGS} \
                 -o ${ID_LENGTH}_video.avi \
                 -vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
                 -nosound -vc mpeg12 -of avi -ovc x264 \
@@ -79,7 +79,8 @@ f_2p() {
     if [ ! -f ${ID_LENGTH}_video.avi ] && [ ! -f ${ID_LENGTH}_pass.txt ]
         then
             MSG=("Comenzando la 1ra pasada..." "" ""); f_mensaje
-            time nice -19 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
+set -x
+            time nice -n 10 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
                 -o /dev/null -passlogfile ${ID_LENGTH}_pass.txt \
                 -vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
                 -nosound -vc mpeg12 -of avi -ovc x264 \
@@ -89,7 +90,7 @@ f_2p() {
                 else MSG=("" "" "("${?}") Algo raro ha pasado aqui :("); f_mensaje
             fi
             MSG=("Comenzando la 2nda pasada..." "" ""); f_mensaje
-            time nice -19 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
+            time nice -n 10 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
                 -o ${ID_LENGTH}_video.avi -passlogfile ${ID_LENGTH}_pass.txt \
                 -vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
                 -nosound -vc mpeg12 -of avi -ovc x264 \
@@ -100,6 +101,7 @@ f_2p() {
             fi
         else MSG=("" "Los ficheros "${ID_LENGTH}"_video.avi y/o "${ID_LENGTH}"_pass.txt ya existen, no se crearán otros." ""); f_mensaje
     fi
+exit 0
 }
 
 f_mkv() {
@@ -124,9 +126,7 @@ f_mkv() {
 f_vcrop() {
     MSG=("El valor de CROP idoneo es "${CROP}", se mostrará el video pra revisarlo. Pulsa dentro la tecla (q) para salir." "" ""); f_mensaje
     read -n 1 -t 10 -p "Pulsa una tecla para continuar..." EOF
-set -x
     mplayer -dvd-device $DVDEV dvd://${LT} -ss $(($ID_LENGTH/2)) -really-quiet -nosound -vf rectangle=${CROP} 2>/dev/null
-exit 0
     if [ ${?} = "0" ]
         then MSG=("OK!" "" ""); f_mensaje
         else MSG=("" "" "("${?}") Algo ha fallado :("); f_mensaje
