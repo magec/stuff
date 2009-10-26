@@ -209,8 +209,8 @@ globalkeys = awful.util.table.join(
               end),
 --
 --  Aquí enchufo mis teclas
+--  Los keycodes se pueden ver con el comando 'xev'
 --
---    awful.key({ modkey,           }, "#49",  function () dropdown_toggle(terminal) end), -- tecla º
     awful.key({ modkey,           }, "#49",  function () toggle(terminal) end), -- tecla º
     awful.key({ modkey,           }, "#107", function () toggle('scrot -e gqview') end), -- tecla Print Screen
     awful.key({ modkey, "Control" }, "w", function () awful.util.spawn(setrndwall) end),
@@ -226,6 +226,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "v", function () awful.util.spawn(terminal..' -e ncmpcpp') end),
     awful.key({ modkey, "Control" }, "0", function () awful.util.spawn('xrandr -o left') end),
     awful.key({ modkey, "Control" }, "'", function () awful.util.spawn('xrandr -o normal') end),
+    awful.key({ modkey, "Control" }, "#21", function () awful.util.spawn('xrandr --output VGA1 --mode 1280x1024') end),
     awful.key({ modkey, "Control" }, "b", function () awful.util.spawn('mpc play') end),
     awful.key({ modkey, "Control" }, "n", function () awful.util.spawn('mpc pause') end),
     awful.key({ modkey, "Control" }, "m", function () awful.util.spawn('mpc prev'); wicked.widgets.mpd() end),
