@@ -79,7 +79,6 @@ f_2p() {
     if [ ! -f ${ID_LENGTH}_video.avi ] && [ ! -f ${ID_LENGTH}_pass.txt ]
         then
             MSG=("Comenzando la 1ra pasada..." "" ""); f_mensaje
-set -x
             time nice -n 10 mencoder dvd://${LT} -dvd-device ${DVDEV} ${EXARGS} \
                 -o /dev/null -passlogfile ${ID_LENGTH}_pass.txt \
                 -vf crop=${CROP},${EXVFARGS}hqdn3d=2:1:2,softskip,harddup \
@@ -143,7 +142,7 @@ f_intro() {
     if [ -z "${USUB}" ] 
         then echo -e '\E[48;33m'"\033[1mNo hay pistas de subtítulos.\033[0m"${USUB}
         else echo -e '\E[48;35m'"\033[1mLas pistas de subtítulos interesantes son: \033[0m"${USUB}
-            echo ${DVD_ID} | xargs -n1 | grep ^'ID_SID_' | egrep 'en|es' | awk '{print " "$1}'
+            echo ${DVD_ID} | xargs -n1 | grep ^'ID_SID_' | egrep 'en|es|fr' | awk '{print " "$1}'
 
     fi
     echo -e '\E[48;35m'"\033[1mResolucion original: \033[0m"`echo ${DVD_ID} | xargs -n1 | egrep 'WIDTH|HEIGHT' | cut -f 2 -d "=" | xargs | tr ' ' 'x'`
@@ -166,11 +165,15 @@ FSIZE="1400"
 DVD_ID=$(mplayer -dvd-device ${DVDEV} dvd:// -identify -nosound -frames 1 -nocache 2>/dev/null | grep ^ID)
 ID_LENGTH=$(echo ${DVD_ID} | xargs -n1 | grep '_LENGTH' | cut -f 2 -d "=" | sort -g | tail -1 | cut -f 1 -d '.')
 LT=$(echo ${DVD_ID} | xargs -n1 | grep ${ID_LENGTH} | head -n1 | cut -f 1 -d "=" | tr -d '=-z')
+DVD_ID=$(mplayer -dvd-device ${DVDEV} dvd://${LT} -identify -nosound -frames 1 -nocache 2>/dev/null | grep ^ID)
 LT_DUR=$(printf "%02d:%02d:%02d\n" `expr ${ID_LENGTH} / 3600` `expr \( ${ID_LENGTH} % 3600 \) / 60` `expr ${ID_LENGTH} % 60`)
-UAUD=$(echo $DVD_ID | xargs -n1 | grep ^'ID_AID_' | egrep 'en|es' | tr -d '=-z' | xargs)
-if [ -z "${UAD}" ] ; then UAUD=$(echo $DVD_ID | xargs -n1 | grep ^'ID_AUDIO_ID' | cut -f2 -d '=' | xargs) ; fi
-if [ -z "${UAD}" ] ; then UAUD="128"; fi
-USUB=$(echo $DVD_ID | xargs -n1 | grep ^'ID_SID_' | egrep 'en|es' | tr -d '=-z' | xargs)
+UAUD=$(echo $DVD_ID | xargs -n1 | grep ^'ID_AID_' | egrep 'en|es|fr' | tr -d '=-z' | xargs)
+echo $UAUD
+if [ -z "${UAUD}" ] ; then UAUD=$(echo $DVD_ID | xargs -n1 | grep ^'ID_AUDIO_ID' | cut -f2 -d '=' | xargs) ; fi
+echo $UAUD
+if [ -z "${UAUD}" ] ; then UAUD="128"; fi
+echo $UAUD
+USUB=$(echo $DVD_ID | xargs -n1 | grep ^'ID_SID_' | egrep 'en|es|fr' | tr -d '=-z' | xargs)
 CROP=$(mplayer -dvd-device ${DVDEV} dvd://${LT} -vf cropdetect -nosound -vo null -vc mpeg12 -frames 30 -sstep $((${ID_LENGTH}/30)) -nocache 2>/dev/null | grep 'CROP' | cut -f 2 -d "=" |  sed s/').'//g | uniq -c | sort -rn | egrep -o '[0-9]+:[0-9]+:[0-9]+:[0-9]+' | head -n1)
 VIDBR=$(($((${FSIZE}*8192/${ID_LENGTH}))-${AUDBR}))
 #

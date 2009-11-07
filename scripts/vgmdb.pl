@@ -326,6 +326,7 @@ sub rename($) {
     my $dir   = shift;
     my $newdir = "$vgm{ALBUM} [$vgmcd]";
     $newdir =~ s/[\/:|]/,/g;
+    $newdir =~ s/"/'/g;
     $newdir =~ s/ , /, /g;
     $newdir =~ s/[\*?<>]//g;
     $newdir =~ s/\s+/ /g;
@@ -342,7 +343,7 @@ sub rename($) {
         my $bytes=-s $cd{$track}{FNAME};
         dprint "\n / Inside "; dprint BLUE BOLD "'$newdir'\n";
         dprint " | We will copy "; dprint YELLOW "'$cd{$track}{NTITLE}.flac' ($bytes bytes)\n";
-        dprint " | as "; dprint YELLOW "'$cd{$track}{NTITLE}'\n";
+        dprint " | as "; dprint YELLOW "'$cd{$track}{NTITLE}.flac'\n";
         copy ($cd{$track}{FNAME}, "$destfile") or die $!;
         $bytes=-s $destfile;
         dprint " | "; dprint BOLD GREEN "OK! ($bytes bytes).\n";
