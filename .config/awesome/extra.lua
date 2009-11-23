@@ -281,9 +281,13 @@ function mpc_info()
     local now = escape(pread("mpc"))
     if now and now ~= '' then
         song,state,time = now:match('^(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-%(%d+%%%))')
+        if string.len(song) > 60 then
+            song = '...'..string.sub(song, -57)
+        end
         if state == 'playing' then
             if song ~= '' and time ~= '' then
-                return '[Play]<span color="white"> "'..song..'"</span> '..time
+                -- ugly utf8 workaround Part 1
+                return '[Play]<span font_desc="Sans 8" color="white"> "'..song..'"</span> '..time
             end
         elseif state == 'paused' then
             if song ~= '' and time ~= '' then
@@ -304,9 +308,11 @@ end
 mpd_ico = widget({ type = "imagebox" })
 createIco(mpd_ico, 'mpd.png', terminal..' -e ncmpcpp')
 --  textbox
-mpcwidget = widget({ type = 'textbox'
-                   ,name  = 'mpcwidget'
+mpcwidget = widget({ type    = 'textbox'
+                   , name    = 'mpcwidget'
                    })
+-- ugly utf8 workaround Part 2
+awful.widget.layout.margins[mpcwidget] = { top = 1, bottom = 0, left = 0, right = 0 }
 -- llamada inicial a la función
 mpcwidget.text = mpc_info()
 -- textbox buttons
