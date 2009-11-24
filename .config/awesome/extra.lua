@@ -281,11 +281,11 @@ function mpc_info()
     local now = escape(pread("mpc"))
     if now and now ~= '' then
         song,state,time = now:match('^(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-%(%d+%%%))')
-        if string.len(song) > 60 then
-            song = '...'..string.sub(song, -57)
-        end
         if state == 'playing' then
             if song ~= '' and time ~= '' then
+                if string.len(song) > 60 then
+                    song = '...'..string.sub(song, -57)
+                end
                 -- ugly utf8 workaround Part 1
                 return '[Play]<span font_desc="Sans 8" color="white"> "'..song..'"</span> '..time
             end
