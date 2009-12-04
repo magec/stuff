@@ -142,8 +142,7 @@ EOF
 }
 
 # Para poder usar el script sin cgi.
-#$FORM{'input'} = $ARGV[0] if not $FORM{'input'};
-$FORM{'input'} = '192.168.246.33' if not $FORM{'input'};
+$FORM{'input'} = $ARGV[0] if not $FORM{'input'};
 
 if ( $FORM{'input'} =~ /^[\w-]+(?:|(\.[\w-]+)+)$/ ) {
     print "<H2>$FORM{'input'}</H2>\n";
@@ -163,7 +162,7 @@ my $info = new SNMP::Info(
             BulkWalk    => 1,
             # The rest is passed to SNMP::Session
             DestHost    => $FORM{'input'}, # || '192.168.238.4', # 192.168.247.80
-            Community   => 'uocpublic',
+            Community   => 'XXXXXXXX',
             Version     => 2,
             MibDirs     => [    '/usr/share/netdisco/mibs/rfc'
                            ,    '/usr/share/netdisco/mibs/net-snmp'
@@ -203,9 +202,9 @@ my $i_discards_out = $info->i_discards_out();
 my $i_bad_proto_in = $info->i_bad_proto_in();
 my $i_qlen_out = $info->i_qlen_out();
 # Get CDP Neighbor info
-my $c_if       = $info->c_if();
-my $c_ip       = $info->c_ip();
-my $c_port     = $info->c_port();
+my $c_if = $info->c_if();
+my $c_ip = $info->c_ip();
+my $c_port = $info->c_port();
 #Vlan
 my $i_vlan = $info->i_vlan();
 my $i_vlan_membership = $info->i_vlan_membership();
@@ -438,6 +437,7 @@ sub hashmatch(%$) { # devuelve el puerto asociado a claves de $hash cuyo valor c
     foreach my $iid (sort { $a <=> $b } keys %$interfaces){
         my $TRArgs = 'bgcolor=#DDDDDD';
         $TRArgs = 'bgcolor=#B3D98C' if $i_up->{$iid} ne "up";
+        $TRArgs = 'bgcolor=#BBCBDB' if ($info->uptime() - $i_lastchange->{$iid})/100 < 86400;
         $TRArgs = 'bgcolor=#D1D175 style="font-style:italic"' if $i_type->{$iid} ne "ethernetCsmacd";
         $TRArgs = 'bgcolor=#8CB3D9' if $i_up_admin->{$iid} eq "down";
         $TRArgs = 'bgcolor=#EEEEEE style="color:gray; font-style:italic"' if $i_up_admin->{$iid} eq "down" and $i_up->{$iid} eq "down";
@@ -466,7 +466,7 @@ sub hashmatch(%$) { # devuelve el puerto asociado a claves de $hash cuyo valor c
             } else {
                  print &td($untag);
             }
-        print &td(&timeticks2HR($info->uptime()-$i_lastchange->{$iid}))
+        print &td(&timeticks2HR($info->uptime() - $i_lastchange->{$iid}))
             .&td(&convert_bytes($i_octet_in64->{$iid}, 1))
             .&td(&convert_bytes($i_octet_out64->{$iid}, 1))
             .&td($i_pkts_bcast_in64->{$iid})

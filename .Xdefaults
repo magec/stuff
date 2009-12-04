@@ -116,6 +116,8 @@ xterm*internalBorder:     0
 xterm*loginShell:         true
 xterm*scrollBar:          false
 xterm*cursorBlink:        true
+xterm*metaSendsEscape:    true
+xterm*altSendsEscape:     true
 !xterm*geometry:          80x26
 xterm*saveLines:          65535
 xterm*dynamicColors:      on
