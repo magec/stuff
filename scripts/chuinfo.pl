@@ -438,6 +438,7 @@ sub hashmatch(%$) { # devuelve el puerto asociado a claves de $hash cuyo valor c
         my $TRArgs = 'bgcolor=#DDDDDD';
         $TRArgs = 'bgcolor=#B3D98C' if $i_up->{$iid} ne "up";
         $TRArgs = 'bgcolor=#BBCBDB' if ($info->uptime() - $i_lastchange->{$iid})/100 < 86400;
+        $TRArgs = 'bgcolor=#8CB3D9' if ($info->uptime() - $i_lastchange->{$iid})/100 < 900
         $TRArgs = 'bgcolor=#D1D175 style="font-style:italic"' if $i_type->{$iid} ne "ethernetCsmacd";
         $TRArgs = 'bgcolor=#8CB3D9' if $i_up_admin->{$iid} eq "down";
         $TRArgs = 'bgcolor=#EEEEEE style="color:gray; font-style:italic"' if $i_up_admin->{$iid} eq "down" and $i_up->{$iid} eq "down";
