@@ -7,12 +7,26 @@ imgpath = awful.util.getdir("config")..'/imgs/'
 confdir = awful.util.getdir("config")..'/'
 setrndwall = "awsetbg -t -r "..awful.util.getdir("config").."/walls"
 setwall = "awsetbg -c "..awful.util.getdir("config").."/walls/vladstudio_microbes_1920x1200.jpg"
+browser = os.getenv('BROWSER') or 'opera'
 --}}}
 --{{{    Utilidades/Funciones
 function escape(text)
-    return awful.util.escape(text or 'nil')
+    return awful.util.escape(text or 'UNKNOWN')
 end
--- Copy from awful.util
+-- Bold
+function bold(text)
+    return '<b>' .. text .. '</b>'
+end
+-- Italic
+function italic(text)
+    return '<i>' .. text .. '</i>'
+end
+-- Foreground color
+function fgc(text,color)
+    if not color then color = 'white' end
+    return '<span color="'..color..'">'..text..'</span>' 
+end
+-- process_read (io.popen)
 function pread(cmd)
     if cmd and cmd ~= '' then
         local f, err = io.popen(cmd, 'r')
@@ -25,7 +39,7 @@ function pread(cmd)
         end
     end
 end
--- Modificada para leer ficheros.
+-- file_read (io.open)
 function fread(cmd)
     if cmd and cmd ~= '' then
         local f, err = io.open(cmd, 'r')
@@ -73,7 +87,6 @@ function toggle(prog,height,sticky,screen)
     local height = height or 0.3 -- 30%
     local sticky = sticky or false
     local screen = screen or capi.mouse.screen
-
     if not dropdown[prog] then
         dropdown[prog] = {}
 
@@ -86,23 +99,18 @@ function toggle(prog,height,sticky,screen)
             end
         end)
     end
-
     if not dropdown[prog][screen] then
         spawnw = function (c)
             dropdown[prog][screen] = c
-
             -- Teardrop clients are floaters
             awful.client.floating.set(c, true)
-
             -- Client geometry
             local screengeom = capi.screen[screen].workarea
-
             if height < 1 then
                 height = screengeom.height * height
             else
                 height = screengeom.height
             end
-
             -- Client properties
             c:geometry({ x = screengeom.x/2, y = 0, width = screengeom.width, height = height })
             c.ontop = true
@@ -110,24 +118,20 @@ function toggle(prog,height,sticky,screen)
             c.skip_taskbar = true
             if sticky then c.sticky = true end
             if c.titlebar then awful.titlebar.remove(c) end
-
             c:raise()
             capi.client.focus = c
             capi.client.remove_signal("manage", spawnw)
         end
-
         -- Add manage signal and spawn the program
         capi.client.add_signal("manage", spawnw)
         awful.util.spawn(prog, false)
     else
         -- Get a running client
         c = dropdown[prog][screen]
-
         -- Switch the client to the current workspace
         if c:isvisible() == false then c.hidden = true;
             awful.client.movetotag(awful.tag.selected(screen), c)
         end
-
         -- Focus and raise if hidden
         if c.hidden then
             c.hidden = false
@@ -144,6 +148,7 @@ function toggle(prog,height,sticky,screen)
     end
 end
 --}}}
+--
 --{{{    GMail (imagebox+textbox)
 --------------------------------------------------------------------------------
 --  Datos de gmail
@@ -164,22 +169,24 @@ function check_gmail()
     if feed:match('fullcount>%d+<') then
         lcount = feed:match('fullcount>(%d+)<')
     else
-        return '<span color="red">No "fullcount" TAG.</span>'
+        return fgc('No "fullcount" TAG.', 'red')
     end
     if lcount ~= count then
         for title,summary,name,email in feed:gmatch('<entry>\n<title>(.-)</title>\n<summary>(.-)</summary>.-<name>(.-)</name>\n<email>(.-)</email>') do
-            pop = naughty.notify({ title      = '<span color="white">New mail on </span>'..mailadd
-                                 , text       = escape(name..' ('..email..')\n'..title..'\n'..summary)
-                                 , timeout    = 20
-                                 , position   = "top_right"
-                                 , fg         = beautiful.fg_focus
-                                 , bg         = beautiful.bg_focus
+            pop = naughty.notify({ title    = fgc('New mail on ')..mailadd
+                                 , opacity  = 1
+                                 , icon     = imgpath..'yellow_mail.png'
+                                 , text     = escape(name..' ('..email..')\n'..title..'\n'..summary)
+                                 , timeout  = 20
+                                 , position = "top_right"
+                                 , fg       = beautiful.fg_focus
+                                 , bg       = beautiful.bg_focus
                                  })
         end
         count = lcount
     end
     if tonumber(lcount) > 0 then
-        return '<span color="red">(<b>'..lcount..'</b>)</span>'
+        return fgc(bold(lcount), 'red')
     else
         return ''
     end
@@ -192,7 +199,7 @@ function getMail()
 end
 --  imagebox
 mail_ico = widget({ type = "imagebox" })
-createIco(mail_ico,'mail.png','opera "'..mailurl..'"&')
+createIco(mail_ico, 'mail.png', browser..' '..mailurl..'"&')
 --  textbox
 mailwidget = widget({ type  = "textbox"
                     , name  = "mailwidget"
@@ -209,7 +216,7 @@ mailwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 mailwidget:buttons(awful.util.table.join(
     awful.button({ }, 1, function ()
         getMail()
-        os.execute('opera "'..mailurl..'"&')
+        os.execute(browser..' "'..mailurl..'"&')
     end)
 ))
 --}}}
@@ -229,12 +236,12 @@ function bat_info()
         elseif sta:match("Discharging") then
         dir = "-"
         if tonumber(battery) < 10 then
-            naughty.notify({ title      = '<span color="white">Battery Warning</span>\n'
-                           , text       = "Battery low!"..battery.."% left!"
-                           , timeout    = 10
-                           , position   = "top_right"
-                           , fg         = beautiful.fg_focus
-                           , bg         = beautiful.bg_focus
+            naughty.notify({ title    = fgc('Battery Warning\n')
+                           , text     = "Battery low!"..battery.."% left!"
+                           , timeout  = 10
+                           , position = "top_right"
+                           , fg       = beautiful.fg_focus
+                           , bg       = beautiful.bg_focus
                            })
         end
     else
@@ -254,13 +261,14 @@ batterywidget.text = bat_info()
 batterywidget:add_signal("mouse::enter",function()
     naughty.destroy(pop)
     local text = fread("/proc/acpi/battery/BAT0/info")
-    pop = naughty.notify({ title  = '<span color="white">BAT0/info</span>\n'
-                     , text       = escape(text)
-                     , icon       = imgpath..'swp.png'
-                     , icon_size  = 32
-                     , timeout    = 0
-                     , position   = "bottom_right"
-                     , bg         = beautiful.bg_focus
+    pop = naughty.notify({ title = fgc('BAT0/info\n')
+                     , text      = escape(text)
+                     , icon      = imgpath..'swp.png'
+                     , icon_size = 32
+                     , timeout   = 0
+                     , position  = "bottom_right"
+                     , fg        = beautiful.fg_focus
+                     , bg        = beautiful.bg_focus
                      })
 end)
 batterywidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
@@ -269,23 +277,40 @@ end
 --{{{    Separadores (img)
 --------------------------------------------------------------------------------
 separator = widget({ type = 'imagebox'
-                    , name  = 'separator'
-                    })
+                   , name  = 'separator'
+                   })
 separator.image = image(awful.util.getdir("config").."/imgs/separador2.png")
 separator.resize = false
 --}}}
 --{{{    MPC (imagebox+textbox) requiere mpc/mpd
 --------------------------------------------------------------------------------
 --  Devuelve estado de mpc
+local oldsong
 function mpc_info()
-    local now = escape(pread("mpc"))
+    local now = escape(pread('mpc -f "%name%\n%artist%\n%album%\n%title%\n%track%\n%time%\n%file%"'))
     if now and now ~= '' then
-        song,state,time = now:match('^(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-%(%d+%%%))')
+--        song,state,time = now:match('^(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-%(%d+%%%))')
+        local name,artist,album,title,track,total,file,state,time = now:match('^(.-)\n(.-)\n(.-)\n(.-)\n(.-)\n(.-)\n(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-%(%d+%%%))')
         if state == 'playing' then
-            if song ~= '' and time ~= '' then
+            if artist ~= '' and title ~= '' and time ~= '' then
+                song = artist.." - "..title
                 if string.len(song) > 60 then
                     song = '...'..string.sub(song, -57)
                 end
+                -- Popup con el track
+                if album ~= '' and song ~= oldsong then
+                    naughty.notify { icon    = imgpath .. 'mpd_logo.png'
+                                   , timeout = 3
+                                   , fg      = beautiful.fg_focus
+                                   , bg      = beautiful.bg_focus
+                                   , text    = string.format("\n%s %s\n%s  %s\n%s  %s"
+                                                            , 'Artist:', fgc(bold(artist))
+                                                            , 'Album:' , fgc(bold(album))
+                                                            , 'Title:' , fgc(bold(title))
+                                                            )
+                                   }
+                end
+                oldsong = song
                 -- ugly utf8 workaround Part 1
                 return '[Play]<span font_desc="Sans 8" color="white"> "'..song..'"</span> '..time
             end
@@ -298,10 +323,10 @@ function mpc_info()
         elseif now:match('^Updating%sDB') then
             return '[Wait] Updating Database...'
         else
-            return '<span color="red">[DEAD]</span> :_('
+            return fgc('[DEAD]', 'red')..' :_('
         end
     else
-        return '<span color="red">NO MPC</span> :_('
+        return fgc('NO MPC', 'red')..' :_('
     end
 end
 --  imagebox
@@ -342,14 +367,12 @@ mpcwidget:buttons(awful.util.table.join(
 function print_mpc()
     naughty.destroy(pop)
     local text = pread("mpc; echo ; mpc stats")
-    pop = naughty.notify({ title     = '<span color="white">MPC Stats</span>\n'
-                         , text      = text
-                         , icon      = imgpath..'mpd.png'
-                         , icon_size = 28
-                         , timeout   = 0
-                         , width     = 400
-                         , position  = "bottom_left"
-                         , bg        = beautiful.bg_focus
+    pop = naughty.notify({ title    = fgc('MPC Stats\n')
+                         , text     = text
+                         , icon     = imgpath..'mpd_logo.png'
+                         , timeout  = 0
+                         , position = "bottom_left"
+                         , bg       = beautiful.bg_focus
                          })
 end
 --  mouse_enter
@@ -409,14 +432,13 @@ memwidget.text = activeram()
 memwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = pread("free -tm")
-    pop = naughty.notify({  title  = '<span color="white">Free</span>\n'
-                         , text       = text
-                         , icon       = imgpath..'mem.png'
-                         , icon_size  = 32
-                         , timeout    = 0
-                         , width      = 700
-                         , position   = "bottom_right"
-                         , bg         = beautiful.bg_focus
+    pop = naughty.notify({ title     = fgc('Free\n')
+                         , text      = text
+                         , icon      = imgpath..'mem.png'
+                         , icon_size = 32
+                         , timeout   = 0
+                         , position  = "bottom_right"
+                         , bg        = beautiful.bg_focus
                          })
     end)
 --  mouse_leave
@@ -455,13 +477,13 @@ swpwidget.text = activeswap()
 swpwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = fread("/proc/meminfo")
-    pop = naughty.notify({  title  = '<span color="white">/proc/meminfo</span>\n'
-                         , text       = text
-                         , icon       = imgpath..'swp.png'
-                         , icon_size  = 32
-                         , timeout    = 0
-                         , position   = "bottom_right"
-                         , bg         = beautiful.bg_focus
+    pop = naughty.notify({ title     = fgc('/proc/meminfo\n')
+                         , text      = text
+                         , icon      = imgpath..'swp.png'
+                         , icon_size = 32
+                         , timeout   = 0
+                         , position  = "bottom_right"
+                         , bg        = beautiful.bg_focus
                          })
     end)
 --  mouse_leave
@@ -510,9 +532,9 @@ function cpu_info()
     info = ''
     for s = 0, #cpu do
         if cpu[s].res > 99 then
-            info = info..'<span color="white">C'..s..':</span><span color="red">LOL</span>'
+            info = info..fgc('C'..s..':')..fgc('LOL', 'red')
         else
-            info = info..'<span color="white">C'..s..':</span>'..string.format("%02d",cpu[s].res)..'%'
+            info = info..fgc('C'..s..':')..string.format("%02d",cpu[s].res)..'%'
         end
         if s ~= #cpu then
             info = info..' '
@@ -543,7 +565,7 @@ cpuwidget.text = cpu_info()
 cpuwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = pread("ps -eo %cpu,%mem,ruser,pid,comm --sort -%cpu | head -20")
-    pop = naughty.notify({ title     = '<span color="white">Processes</span>\n'
+    pop = naughty.notify({ title     = fgc('Processes\n')
                          , text      = text
                          , icon      = imgpath..'cpu.png'
                          , icon_size = 28
@@ -573,9 +595,9 @@ function fs_info()
             for key, value in ipairs(mounts) do
                 if value == string.lower(mpoint) then
                     if tonumber(percent) < 90 then
-                        result = result..'<span color="white">'..value..'~</span>'..percent..'%'
+                        result = result..fgc(value..'~')..percent..'%'
                     else
-                        result = result..'<span color="white">'..value..'~</span><span color="red">'..percent..'%</span>'
+                        result = result..fgc(value..'~')..fgc(percent..'%', 'red')
                     end
                 end
             end
@@ -597,14 +619,13 @@ fswidget.text = fs_info()
 fswidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = pread("df -ha")
-    pop = naughty.notify({ title      = '<span color="white">Disk Usage</span>'
-                         , text       = text..'\n'
-                         , icon       = imgpath..'fs.png'
-                         , icon_size  = 32
-                         , timeout    = 0
-                         , width      = 550
-                         , position   = "bottom_right"
-                         , bg         = beautiful.bg_focus
+    pop = naughty.notify({ title     = fgc('Disk Usage\n')
+                         , text      = text
+                         , icon      = imgpath..'fs.png'
+                         , icon_size = 32
+                         , timeout   = 0
+                         , position  = "bottom_right"
+                         , bg        = beautiful.bg_focus
                          })
 end)
 --  mouse_leave
@@ -622,7 +643,7 @@ function net_info()
     if file then
         iface = file:match('(%w+)%s+00000000%s+%w+%s+0003%s+')
         if not iface or iface == '' then
-            return '' --'<span color="red">NO</span>' -- "No Def GW"
+            return '' --fgc('No Def GW', 'red')
         end
     else
         return "Err: /proc/net/route."
@@ -645,7 +666,7 @@ function net_info()
     else
         rx,tx,rxu,txu = "0","0","B","B"
     end
-    return iface..'<span color="white">↓</span>'..string.format("%04d%2s",rx,rxu)..'<span color="white">↑</span>'..string.format("%04d%2s",tx,txu)
+    return iface..fgc('↓')..string.format("%04d%2s",rx,rxu)..fgc('↑')..string.format("%04d%2s",tx,txu)
 end
 --  imagebox
 net_ico = widget({ type = "imagebox" })
@@ -660,14 +681,13 @@ netwidget.text = net_info()
 netwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local listen = pread("netstat -patun 2>&1 | awk '/ESTABLISHED/{ if ($4 !~ /127.0.0.1|localhost/) print  \"(\"$7\")\t\"$5}'")
-    pop = naughty.notify({ title      = '<span color="white">Established</span>\n'
-                         , text       = listen
-                         , icon       = imgpath..'net-wired.png'
-                         , icon_size  = 32
-                         , timeout    = 0
-                         , position   = "bottom_right"
-                         , width      = 350
-                         , bg         = beautiful.bg_focus
+    pop = naughty.notify({ title     = fgc('Established\n')
+                         , text      = listen
+                         , icon      = imgpath..'net-wired.png'
+                         , icon_size = 32
+                         , timeout   = 0
+                         , position  = "bottom_right"
+                         , bg        = beautiful.bg_focus
                          })
 end)
 -- mouse_leave
@@ -695,14 +715,13 @@ loadwidget.text = avg_load()
 loadwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
     local text = pread("uptime; echo; who")
-    pop = naughty.notify({ title  = '<span color="white">Uptime</span>\n'
-                         , text       = text
-                         , icon       = imgpath..'load.png'
-                         , icon_size  = 32
-                         , timeout    = 0
-                         , width      = 600
-                         , position   = "bottom_right"
-                         , bg         = beautiful.bg_focus
+    pop = naughty.notify({ title     = fgc('Uptime\n')
+                         , text      = text
+                         , icon      = imgpath..'load.png'
+                         , icon_size = 32
+                         , timeout   = 0
+                         , position  = "bottom_right"
+                         , bg        = beautiful.bg_focus
                          })
 end)
 -- mouse_leave
@@ -711,7 +730,6 @@ loadwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --{{{    Volume (Custom) requiere alsa-utils
 --------------------------------------------------------------------------------
 -- Devuelve el volumen "Master" en alsa.
-
 amixline = pread('amixer | head -1')
 if amixline then
     sdev = amixline:match(".-%s%'(%w+)%',0")
@@ -737,8 +755,8 @@ vol_ico = widget({ type = "imagebox" })
 createIco(vol_ico,'vol.png', terminal..' -e alsamixer')
 --  textbox
 volwidget = widget({ type = 'textbox'
-                      , name = 'volwidget'
-                      })
+                   , name = 'volwidget'
+                   })
 --  primera llamada a la función
 volwidget.text = get_vol()
 --  buttons
@@ -752,19 +770,33 @@ volwidget:buttons(awful.util.table.join(
         volwidget.text = get_vol()
     end)
 ))
+-- mouse_enter
+volwidget:add_signal("mouse::enter", function()
+    naughty.destroy(pop)
+    local text = pread('amixer get '..sdev)
+    pop = naughty.notify({ title     = fgc('Volume\n')
+                         , text      = text
+                         , icon      = imgpath..'vol.png'
+                         , icon_size = 28
+                         , timeout   = 0
+                         , position  = "bottom_left"
+                         , bg        = beautiful.bg_focus
+                         })
+end)
+--  mouse_leave
+volwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --}}}
+--
 --{{{   Timers
 --------------------------------------------------------------------------------
-
 --  Hook every sec
 timer1 = timer { timeout = 1 }
 timer1:add_signal("timeout", function()
-    cpuwidget.text = cpu_info()
+    cpuwidget.text  = cpu_info()
     loadwidget.text = avg_load()
-    netwidget.text = net_info()
+    netwidget.text  = net_info()
 end)
 timer1:start()
-
 -- Hook called every 5 secs
 timer5 = timer { timeout = 5 }
 timer5:add_signal("timeout", function()
@@ -774,7 +806,6 @@ timer5:add_signal("timeout", function()
     mpcwidget.text = mpc_info()
 end)
 timer5:start()
-
 --  Hook every 30 secs
 timer30 = timer { timeout = 30 }
 timer30:add_signal("timeout", function()
@@ -782,7 +813,6 @@ timer30:add_signal("timeout", function()
     mailwidget.text = check_gmail()
 end)
 timer30:start()
-
 -- Hook called every minute
 timer60 = timer { timeout = 60 }
 timer60:add_signal("timeout", function()
@@ -791,6 +821,7 @@ timer60:add_signal("timeout", function()
 end)
 timer60:start()
 --}}}
+--
 --{{{    Wibox
 --------------------------------------------------------------------------------
 for s = 1, screen.count() do
@@ -798,12 +829,12 @@ for s = 1, screen.count() do
     statusbar = {}
     -- La creo
     statusbar[s] = awful.wibox({ position = "bottom"
-                         , fg = beautiful.fg_normal
-                         , bg = beautiful.bg_normal
-                         , border_color = beautiful.border_normal
-                         , height = 15
-                         , border_width = 1
-                         })
+                               , fg = beautiful.fg_normal
+                               , bg = beautiful.bg_normal
+                               , border_color = beautiful.border_normal
+                               , height = 15
+                               , border_width = 1
+                               })
     -- Le enchufo los widgets
     statusbar[s].widgets = {    { vol_ico
                                 , volwidget
@@ -841,4 +872,39 @@ for s = 1, screen.count() do
     -- La asigno.
     statusbar[s].screen = s
 end
+--}}}
+--
+--{{{    Keybindings
+--------------------------------------------------------------------------------
+--  Actualizo la tabla globalkeys añadiendo mis keybindings.
+--  Los keycodes se pueden ver con el comando 'xev'
+globalkeys = awful.util.table.join(globalkeys,
+    awful.key({ modkey            }, "F1",   function () mypromptbox[mouse.screen]:run() end),
+    awful.key({ modkey,           }, "#49",  function () toggle(terminal) end), -- tecla º
+    awful.key({ modkey,           }, "#107", function () toggle('scrot -e gqview') end), -- tecla Print Screen
+    awful.key({ modkey, "Control" }, "w",    function () awful.util.spawn(setrndwall) end),
+    awful.key({ modkey, "Control" }, "q",    function () awful.util.spawn(setwall) end),
+    awful.key({ modkey, "Control" }, "t",    function () awful.util.spawn('thunar') end),
+    awful.key({ modkey, "Control" }, "p",    function () awful.util.spawn('pidgin') end),
+    awful.key({ modkey, "Control" }, "c",    function () awful.util.spawn(terminal..' -e mc') end),
+    awful.key({ modkey, "Control" }, "f",    function () awful.util.spawn(browser) end),
+    awful.key({ modkey, "Control" }, "g",    function () awful.util.spawn('gvim') end),
+    awful.key({ modkey, "Control" }, "a",    function () awful.util.spawn('ruc_web_resolucio.sh') end),
+    awful.key({ modkey, "Control" }, "s",    function () awful.util.spawn('sonata') end),
+    awful.key({ modkey, "Control" }, "x",    function () awful.util.spawn('slock') end),
+    awful.key({ modkey, "Control" }, "v",    function () awful.util.spawn(terminal..' -e ncmpcpp') end),
+    awful.key({ modkey, "Control" }, "0",    function () awful.util.spawn('xrandr -o left') end),
+    awful.key({ modkey, "Control" }, "'",    function () awful.util.spawn('xrandr -o normal') end),
+    awful.key({ modkey, "Control" }, "#21",  function () awful.util.spawn('xrandr --output VGA1 --mode 1280x1024') end),
+    awful.key({ modkey, "Control" }, "b",    function () awful.util.spawn('mpc play') end),
+    awful.key({ modkey, "Control" }, "n",    function () awful.util.spawn('mpc pause') end),
+    awful.key({ modkey, "Control" }, "m",    function () awful.util.spawn('mpc prev'); wicked.widgets.mpd() end),
+    awful.key({ modkey, "Control" }, ",",    function () awful.util.spawn('mpc next'); wicked.widgets.mpd() end),
+    awful.key({ modkey, "Control" }, ".",    function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB-'); getVol() end),
+    awful.key({ modkey, "Control" }, "-",    function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB+'); getVol() end),
+    awful.key({ modkey }           , "Up",   function () awful.client.focus.byidx(1); if client.focus then client.focus:raise() end end),
+    awful.key({ modkey }           , "Down", function () awful.client.focus.byidx(-1);  if client.focus then client.focus:raise() end end)
+)
+--  Aplico los keybindings
+root.keys(globalkeys)
 --}}}
