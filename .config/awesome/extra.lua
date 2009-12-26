@@ -24,7 +24,7 @@ end
 -- Foreground color
 function fgc(text,color)
     if not color then color = 'white' end
-    return '<span color="'..color..'">'..text..'</span>' 
+    return '<span color="'..color..'">'..text..'</span>'
 end
 -- process_read (io.popen)
 function pread(cmd)
@@ -49,6 +49,15 @@ function fread(cmd)
             return s
         else
             print(err)
+        end
+    end
+end
+--  esto se carga todas las notificaciones de naughty
+function desnaug()
+    for p,pos in pairs(naughty.notifications[mouse.screen]) do
+        for i,notification in pairs(naughty.notifications[mouse.screen][p]) do
+            naughty.destroy(notification)
+            desnaug()
         end
     end
 end
@@ -157,19 +166,12 @@ mailpass = escape(fread(confdir..mailadd..'.passwd'))
 mailurl  = 'https://mail.google.com/a/intranet.uoc.edu/feed/atom/unread'
 --  mailurl  = 'https://mail.google.com/feed/atom/unread'
 --  Actualiza el estado del widget a partir de un feed de gmail bajado.
+count = 0
 function check_gmail()
     local feed = fread(confdir..mailadd)
-    if not feed or feed == '' then
-         return ''
-    end
-    if not count then
-        count = 0
-    end
-    local lcount = 0
+    local lcount = count
     if feed:match('fullcount>%d+<') then
         lcount = feed:match('fullcount>(%d+)<')
-    else
-        return fgc('No "fullcount" TAG.', 'red')
     end
     if lcount ~= count then
         for title,summary,name,email in feed:gmatch('<entry>\n<title>(.-)</title>\n<summary>(.-)</summary>.-<name>(.-)</name>\n<email>(.-)</email>') do
@@ -204,6 +206,7 @@ createIco(mail_ico, 'mail.png', browser..' '..mailurl..'"&')
 mailwidget = widget({ type  = "textbox"
                     , name  = "mailwidget"
                     })
+-- llamada inicial a la función
 mailwidget.text=check_gmail()
 --  mouse_enter
 mailwidget:add_signal("mouse::enter", function()
@@ -211,7 +214,7 @@ mailwidget:add_signal("mouse::enter", function()
     check_gmail()
 end)
 --  mouse_leave
-mailwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
+mailwidget:add_signal("mouse::leave", function() desnaug() end)
 --  buttons
 mailwidget:buttons(awful.util.table.join(
     awful.button({ }, 1, function ()
@@ -252,26 +255,27 @@ function bat_info()
 end
 battery = io.open("/sys/class/power_supply/BAT0/charge_now")
 if battery then
-bat_ico = widget({ type = "imagebox" })
-createIco(bat_ico, 'bat.png', terminal..' -e xterm')
-batterywidget = widget({ type  = "textbox"
+    bat_ico = widget({ type = "imagebox" })
+    createIco(bat_ico, 'bat.png', terminal..' -e xterm')
+    batterywidget = widget({ type  = "textbox"
                        , name  = "batterywidget"
                        })
-batterywidget.text = bat_info()
-batterywidget:add_signal("mouse::enter",function()
-    naughty.destroy(pop)
-    local text = fread("/proc/acpi/battery/BAT0/info")
-    pop = naughty.notify({ title = fgc('BAT0/info\n')
-                     , text      = escape(text)
-                     , icon      = imgpath..'swp.png'
-                     , icon_size = 32
-                     , timeout   = 0
-                     , position  = "bottom_right"
-                     , fg        = beautiful.fg_focus
-                     , bg        = beautiful.bg_focus
-                     })
-end)
-batterywidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
+    -- llamada inicial a la función
+    batterywidget.text = bat_info()
+    batterywidget:add_signal("mouse::enter",function()
+        naughty.destroy(pop)
+        local text = fread("/proc/acpi/battery/BAT0/info")
+        pop = naughty.notify({ title = fgc('BAT0/info\n')
+                         , text      = escape(text)
+                         , icon      = imgpath..'swp.png'
+                         , icon_size = 32
+                         , timeout   = 0
+                         , position  = "bottom_right"
+                         , fg        = beautiful.fg_focus
+                         , bg        = beautiful.bg_focus
+                         })
+    end)
+    batterywidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 end
 --}}}
 --{{{    Separadores (img)
@@ -289,14 +293,17 @@ local oldsong
 function mpc_info()
     local now = escape(pread('mpc -f "%name%\n%artist%\n%album%\n%title%\n%track%\n%time%\n%file%"'))
     if now and now ~= '' then
---        song,state,time = now:match('^(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-%(%d+%%%))')
         local name,artist,album,title,track,total,file,state,time = now:match('^(.-)\n(.-)\n(.-)\n(.-)\n(.-)\n(.-)\n(.-)\n%[(%w+)%]%s+#%d+/%d+%s+(.-%(%d+%%%))')
-        if state == 'playing' then
-            if artist ~= '' and title ~= '' and time ~= '' then
+        if state and state ~= '' then
+            if artist and title and time then
                 song = artist.." - "..title
                 if string.len(song) > 60 then
                     song = '...'..string.sub(song, -57)
-                end
+                 end
+            else
+                return 'ZOMFG Format Error!'
+            end
+            if state == 'playing' then
                 -- Popup con el track
                 if album ~= '' and song ~= oldsong then
                     naughty.notify { icon    = imgpath .. 'mpd_logo.png'
@@ -313,15 +320,15 @@ function mpc_info()
                 oldsong = song
                 -- ugly utf8 workaround Part 1
                 return '[Play]<span font_desc="Sans 8" color="white"> "'..song..'"</span> '..time
+            elseif state == 'paused' then
+                if song ~= '' and time ~= '' then
+                    return '[Wait] '..song..' '..time
+                end
+            elseif now:match('^Updating%sDB') then
+                return '[Wait] Updating Database...'
+            elseif now:match('^volume:') then
+                return '[Stop] ZZzzz...'
             end
-        elseif state == 'paused' then
-            if song ~= '' and time ~= '' then
-                return '[Wait] '..song..' '..time
-            end
-        elseif now:match('^volume:') then
-            return '[Stop] ZZzzz...'
-        elseif now:match('^Updating%sDB') then
-            return '[Wait] Updating Database...'
         else
             return fgc('[DEAD]', 'red')..' :_('
         end
@@ -579,7 +586,10 @@ cpuwidget:add_signal("mouse::leave", function() naughty.destroy(pop) end)
 --}}}
 --{{{    FileSystem (imagebox+textbox)
 --------------------------------------------------------------------------------
---Busca puntos de pontaje concreto en 'df' y lista el espacio usado.
+-- Busca puntos de pontaje concreto en 'df' y lista el espacio usado.
+-- la llamada statfs de fs tarda la tira en leer mis discos FAT32 (7 segundos a veces)
+-- por primera vez y hace que awesome se demore ese tanto.
+-- De momento he puesto un df >/dev/null&1 en rc.local supercutre para evitarlo.
 function fs_info()
     local mounts  = { "/"
                     , "/home"
@@ -710,7 +720,6 @@ loadwidget = widget({ type = 'textbox'
                     })
 -- llamada inicial a la función
 loadwidget.text = avg_load()
-
 --  mouse_enter
 loadwidget:add_signal("mouse::enter", function()
     naughty.destroy(pop)
@@ -879,31 +888,32 @@ end
 --  Actualizo la tabla globalkeys añadiendo mis keybindings.
 --  Los keycodes se pueden ver con el comando 'xev'
 globalkeys = awful.util.table.join(globalkeys,
-    awful.key({ modkey            }, "F1",   function () mypromptbox[mouse.screen]:run() end),
-    awful.key({ modkey,           }, "#49",  function () toggle(terminal) end), -- tecla º
-    awful.key({ modkey,           }, "#107", function () toggle('scrot -e gqview') end), -- tecla Print Screen
-    awful.key({ modkey, "Control" }, "w",    function () awful.util.spawn(setrndwall) end),
-    awful.key({ modkey, "Control" }, "q",    function () awful.util.spawn(setwall) end),
-    awful.key({ modkey, "Control" }, "t",    function () awful.util.spawn('thunar') end),
-    awful.key({ modkey, "Control" }, "p",    function () awful.util.spawn('pidgin') end),
-    awful.key({ modkey, "Control" }, "c",    function () awful.util.spawn(terminal..' -e mc') end),
-    awful.key({ modkey, "Control" }, "f",    function () awful.util.spawn(browser) end),
-    awful.key({ modkey, "Control" }, "g",    function () awful.util.spawn('gvim') end),
-    awful.key({ modkey, "Control" }, "a",    function () awful.util.spawn('ruc_web_resolucio.sh') end),
-    awful.key({ modkey, "Control" }, "s",    function () awful.util.spawn('sonata') end),
-    awful.key({ modkey, "Control" }, "x",    function () awful.util.spawn('slock') end),
-    awful.key({ modkey, "Control" }, "v",    function () awful.util.spawn(terminal..' -e ncmpcpp') end),
-    awful.key({ modkey, "Control" }, "0",    function () awful.util.spawn('xrandr -o left') end),
-    awful.key({ modkey, "Control" }, "'",    function () awful.util.spawn('xrandr -o normal') end),
-    awful.key({ modkey, "Control" }, "#21",  function () awful.util.spawn('xrandr --output VGA1 --mode 1280x1024') end),
-    awful.key({ modkey, "Control" }, "b",    function () awful.util.spawn('mpc play') end),
-    awful.key({ modkey, "Control" }, "n",    function () awful.util.spawn('mpc pause') end),
-    awful.key({ modkey, "Control" }, "m",    function () awful.util.spawn('mpc prev'); wicked.widgets.mpd() end),
-    awful.key({ modkey, "Control" }, ",",    function () awful.util.spawn('mpc next'); wicked.widgets.mpd() end),
-    awful.key({ modkey, "Control" }, ".",    function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB-'); getVol() end),
-    awful.key({ modkey, "Control" }, "-",    function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB+'); getVol() end),
-    awful.key({ modkey }           , "Up",   function () awful.client.focus.byidx(1); if client.focus then client.focus:raise() end end),
-    awful.key({ modkey }           , "Down", function () awful.client.focus.byidx(-1);  if client.focus then client.focus:raise() end end)
+    awful.key({ modkey            }, "F1",         function () mypromptbox[mouse.screen]:run() end),
+    awful.key({ modkey,           }, "masculine",  function () toggle(terminal) end), -- tecla º
+    awful.key({ modkey,           }, "Print",      function () toggle('scrot -e gqview') end), -- tecla Print Screen
+    awful.key({ modkey,           }, "BackSpace",  function () awful.util.spawn('urxvt -pe tabbed') end),
+    awful.key({ modkey, "Control" }, "w",          function () awful.util.spawn(setrndwall) end),
+    awful.key({ modkey, "Control" }, "q",          function () awful.util.spawn(setwall) end),
+    awful.key({ modkey, "Control" }, "t",          function () awful.util.spawn('thunar') end),
+    awful.key({ modkey, "Control" }, "p",          function () awful.util.spawn('pidgin') end),
+    awful.key({ modkey, "Control" }, "c",          function () awful.util.spawn(terminal..' -e mc') end),
+    awful.key({ modkey, "Control" }, "f",          function () awful.util.spawn(browser) end),
+    awful.key({ modkey, "Control" }, "g",          function () awful.util.spawn('gvim') end),
+    awful.key({ modkey, "Control" }, "a",          function () awful.util.spawn('ruc_web_resolucio.sh') end),
+    awful.key({ modkey, "Control" }, "s",          function () awful.util.spawn('sonata') end),
+    awful.key({ modkey, "Control" }, "x",          function () awful.util.spawn('slock') end),
+    awful.key({ modkey, "Control" }, "v",          function () awful.util.spawn(terminal..' -e ncmpcpp') end),
+    awful.key({ modkey, "Control" }, "0",          function () awful.util.spawn('xrandr -o left') end),
+    awful.key({ modkey, "Control" }, "'",          function () awful.util.spawn('xrandr -o normal') end),
+    awful.key({ modkey, "Control" }, "exclamdown", function () awful.util.spawn('xrandr --output VGA1 --mode 1280x1024') end),
+    awful.key({ modkey, "Control" }, "b",          function () awful.util.spawn('mpc play') end),
+    awful.key({ modkey, "Control" }, "n",          function () awful.util.spawn('mpc pause') end),
+    awful.key({ modkey, "Control" }, "m",          function () awful.util.spawn('mpc prev'); wicked.widgets.mpd() end),
+    awful.key({ modkey, "Control" }, ",",          function () awful.util.spawn('mpc next'); wicked.widgets.mpd() end),
+    awful.key({ modkey, "Control" }, ".",          function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB-'); getVol() end),
+    awful.key({ modkey, "Control" }, "-",          function () awful.util.spawn('amixer -c 0 set '..sdev..' 3dB+'); getVol() end),
+    awful.key({ modkey }           , "Up",         function () awful.client.focus.byidx(1); if client.focus then client.focus:raise() end end),
+    awful.key({ modkey }           , "Down",       function () awful.client.focus.byidx(-1);  if client.focus then client.focus:raise() end end)
 )
 --  Aplico los keybindings
 root.keys(globalkeys)

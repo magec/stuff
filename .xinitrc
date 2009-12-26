@@ -16,4 +16,4 @@ test -f `which parcellite`  && parcellite      &
 test -f `which wicd-client` && wicd-client     &
 test -f `which thunar`      && thunar --daemon &
 # o-som
-exec awesome > ~/.awesome.err 2>&1
+exec ck-launch-session awesome > ~/.awesome.err 2>&1
