@@ -324,13 +324,15 @@ function mpc_info()
                 if song ~= '' and time ~= '' then
                     return '[Wait] '..song..' '..time
                 end
-            elseif now:match('^Updating%sDB') then
+            end
+        else
+            if now:match('^Updating%sDB') then
                 return '[Wait] Updating Database...'
             elseif now:match('^volume:') then
                 return '[Stop] ZZzzz...'
+            else
+                return fgc('[DEAD]', 'red')..' :_('
             end
-        else
-            return fgc('[DEAD]', 'red')..' :_('
         end
     else
         return fgc('NO MPC', 'red')..' :_('
