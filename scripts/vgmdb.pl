@@ -36,7 +36,8 @@ my %cd=();
 my %vgm=();
 my @catnums=();
 my @log=();
-my $threshold = 13;
+#my $threshold = 13;
+my $threshold = 10;
 
 
 sub dprint {
@@ -116,7 +117,8 @@ sub hashfiles(@) {
         my $secsre = $info->{TOTALSAMPLES} / $info->{SAMPLERATE};
         $secsre =~ s/\.\d+$//g;
         my $secs = sprintf ("%.2d:%.2d", $secsre/60%60, $secsre%60);
-        my $tnumber = $tags->{TRACKNUMBER} || $tags->{tracknumber} || "";
+#        my $tnumber = $tags->{TRACKNUMBER} || $tags->{tracknumber} || "";
+        my $tnumber = "";
         $tnumber = $count unless $tnumber =~ /^\d\d$/;
         $tnumber = sprintf ("%02d", $tnumber) if length($tnumber) == 1;
         $count++;
@@ -359,6 +361,7 @@ sub rename($) {
                 return 0;
             }
             my $genre  = $vgm{'Classification'} || 'VGM';
+            $genre =~ s/,\s/;/g;
             my $date   = $vgm{'Release Date'}   || 'XXXX';
             #$date = $& if $date =~ /\d+$/; # Only year MAN
             my $version = "Type:$vgm{'Release Type'}, Media:$vgm{'Media Format'}, Price:$vgm{'Release Price'}";
