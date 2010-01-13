@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use SNMP;
+
+$SNMP::save_descriptions = 1;
+&SNMP::addMibDirs("mibs_f5");
+&SNMP::addMibFiles("ALL");
+&SNMP::initMib();
+
+my %params = (
+    host        => $ENV{host}       || 'localhost',
+    port        => $ENV{port}       || 161,
+    community   => $ENV{community}  || 'uocpublic',
+    group       => $ENV{group}      || 'Network',
+    version     => '2',
+);
+
+if ($0 =~ /^snmp_([^_]+)_([^_]+)_([^_]+)((?:|_(GAUGE|COUNTER|DERIVE|ABSOLUTE)\d*))$/) {
+    $params{'group'} = $1;
+    $params{'host'}  = $2;
+    $params{'oid'}   = $3;
+    $params{'type'}  = $4;
+} else {
+    die "regex phail!\n"
+}
+
+my $session = new SNMP::Session(
+    DestHost        => $params{'host'},
+    Community       => $params{'community'},
+    Version         => $params{'version'},
+    Port            => $params{'port'},
+);
+
+my $varbinds = new SNMP::VarList([$params{'oid'}]);
+my $count = 0;
+
+while (!$session->{ErrorStr}) {
+    ++$count;
+    my $result = $session->getnext($varbinds);
+    last if $$varbinds[0]->tag ne $params{'oid'};
+    if ($ARGV[0] and lc($ARGV[0]) eq "config") {
+        if ($count == 1) {
+            print "host_name $params{group}\n";
+            print "graph_title ($params{host}) $SNMP::MIB{$params{oid}}{moduleID}::$SNMP::MIB{$params{oid}}{label}\n";
+            print "graph_category $params{host}\n";
+            my $info = $SNMP::MIB{$params{oid}}{description} || 'NONE';
+            $info =~ s/\s+/ /g;
+            print "graph_info $info\n";
+            print "graph_vlabel $SNMP::MIB{$params{oid}}{objectID}\n";
+            if ($params{'type'} =~ /^_([A-Z]+)(\d*)/) {
+                print "result$count.type $1\n";
+                print "result$count.min 0\n" if $1 eq "DERIVE";
+                print "result$count.cdef result,$2,*\n" if $2;
+            }
+        }
+        print "result$count.label ($count)$SNMP::MIB{$params{oid}}{type}\n";
+        print "result$count.draw LINEA1\n";
+    } else {
+        if (defined $result) {
+            print "result$count.value $result\n";
+        } else {
+            print "result$count.value U\n";
+        }
+    }
+};

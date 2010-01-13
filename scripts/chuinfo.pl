@@ -22,14 +22,19 @@ sub footer() {  # HTML Footer (chapamos por las buenas)
 sub td($$) {# Paso de tratar las celdas a pelo.
     my $text = shift || "";
     my $args = shift || "";
-    return "<TD $args>$text</TD>" if defined $text and $text ne "" or return '<TD bgcolor=#EEEEEE style="color:grey;font-style:italic">Null</TD>';
+    return "<TD $args>$text</TD>" if $text ne "" or return '<TD bgcolor=#EEEEEE style="color:grey;font-style:italic">Null</TD>';
 }
 
+sub tdn($$) {# Paso de tratar las celdas a pelo.
+    my $text = shift || "";
+    my $args = shift || "";
+    return "<TD $args>$text</TD>" if $text !~ /^\-/ or return '<TD bgcolor=#D9B38">'.$text.'</TD>';
+}
 sub tde($$) {# Aquí devolvemos un color de alerta si el valor es verdadero (diferente de 0)
     my $text = shift || 0;
     my $args = shift || "";
-    if ( defined $text and $text ne "") {
-        if ($text gt 0) {
+    if (defined $text) {
+        if ($text gt 0 or $text =~ /^-/) {
             return "<TD bgcolor=#D9B38><I>$text</I></TD>";
         } else {
             return "<TD $args>$text</TD>";
@@ -162,7 +167,7 @@ my $info = new SNMP::Info(
             BulkWalk    => 1,
             # The rest is passed to SNMP::Session
             DestHost    => $FORM{'input'}, # || '192.168.238.4', # 192.168.247.80
-            Community   => 'XXXXXXXX',
+            Community   => 'public',
             Version     => 2,
             MibDirs     => [    '/usr/share/netdisco/mibs/rfc'
                            ,    '/usr/share/netdisco/mibs/net-snmp'
@@ -202,9 +207,9 @@ my $i_discards_out = $info->i_discards_out();
 my $i_bad_proto_in = $info->i_bad_proto_in();
 my $i_qlen_out = $info->i_qlen_out();
 # Get CDP Neighbor info
-my $c_if = $info->c_if();
-my $c_ip = $info->c_ip();
-my $c_port = $info->c_port();
+my $c_if       = $info->c_if();
+my $c_ip       = $info->c_ip();
+my $c_port     = $info->c_port();
 #Vlan
 my $i_vlan = $info->i_vlan();
 my $i_vlan_membership = $info->i_vlan_membership();
@@ -436,9 +441,12 @@ sub hashmatch(%$) { # devuelve el puerto asociado a claves de $hash cuyo valor c
 
     foreach my $iid (sort { $a <=> $b } keys %$interfaces){
         my $TRArgs = 'bgcolor=#DDDDDD';
+        my $itime = ($info->uptime() - $i_lastchange->{$iid});
         $TRArgs = 'bgcolor=#B3D98C' if $i_up->{$iid} ne "up";
-        $TRArgs = 'bgcolor=#BBCBDB' if ($info->uptime() - $i_lastchange->{$iid})/100 < 86400;
-        $TRArgs = 'bgcolor=#8CB3D9' if ($info->uptime() - $i_lastchange->{$iid})/100 < 900
+        if ($itime > 0) {
+            $TRArgs = 'bgcolor=#BBCBDB' if $itime/100 < 86400;
+            $TRArgs = 'bgcolor=#8CB3D9' if $itime/100 < 900;
+        }
         $TRArgs = 'bgcolor=#D1D175 style="font-style:italic"' if $i_type->{$iid} ne "ethernetCsmacd";
         $TRArgs = 'bgcolor=#8CB3D9' if $i_up_admin->{$iid} eq "down";
         $TRArgs = 'bgcolor=#EEEEEE style="color:gray; font-style:italic"' if $i_up_admin->{$iid} eq "down" and $i_up->{$iid} eq "down";
@@ -467,7 +475,7 @@ sub hashmatch(%$) { # devuelve el puerto asociado a claves de $hash cuyo valor c
             } else {
                  print &td($untag);
             }
-        print &td(&timeticks2HR($info->uptime() - $i_lastchange->{$iid}))
+        print &tdn(&timeticks2HR($itime))
             .&td(&convert_bytes($i_octet_in64->{$iid}, 1))
             .&td(&convert_bytes($i_octet_out64->{$iid}, 1))
             .&td($i_pkts_bcast_in64->{$iid})
