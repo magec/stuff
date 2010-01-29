@@ -270,7 +270,7 @@ my $vtp_trunk_dyn_stat = $info->vtp_trunk_dyn_stat();
     my $netmask = $info->ip_netmask();
     my $broadcast = $info->ip_broadcast();
 
-    print "<B>IP Adress Table:</B><BR>\n";
+    print "<B>Policies:</B><BR>\n";
     print "$table<TR bgcolor=#AAAAAA>"
         .&td('Index')
         .&td('Port')
