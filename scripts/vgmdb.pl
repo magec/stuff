@@ -20,7 +20,7 @@ $0 =~ s/.*\///g;
 unless (@ARGV) {
     print <<EOF;
 Usage: $0 <DIR1> <DIR2> ...
-$0 will (or not):
+$0 will or won't:
 1) Search on every DIR for flac files.
 2) Launch a query to vcgmdb.net based on DIR's name.
 3) Crawl through all results looking for the matching disc based on the length of each track.
@@ -152,7 +152,7 @@ sub vgmdbsearch($) {
     $album =~ s/\sdis[kc]|ost|cd\w/+/gi;
     $album =~ s/\soriginal.soundtrack(?:|s)/+/gi;
     $album =~ s/[\[\{\(].*?[\)\}\]]/+/gi;
-    $album =~ s/\W/+/g;
+#    $album =~ s/\W/+/g;
     $album =~ s/\++/+/g;
     $album =~ s/\+*$//g;
 #    $album = "Valkyrie+profile";
@@ -163,23 +163,24 @@ sub vgmdbsearch($) {
     my $page = decode_entities(&http('http://vgmdb.net/search?do=results', 'POST', "action=advancedsearch&albumtitles=$album&sortby=release&orderby=ASC&childmodifier=1",'http://vgmdb.net/search'));
     $page = encode('utf-8', $page); # A lo bestia.
     my %results=();
-    dprint GREEN "\nCATALOG NUM\tID\tYEAR\tNAME\n";
+    dprint GREEN "\nCATALOG NUM    ID   YEAR TYPE                  NAME\n";
     dprint GREEN "=" x (80)."\n";
 
-    my %types = (  '#CEFFFF'=> 'Official Release'
-                ,  yellow   => 'Enclosure / Promo'
-                ,  orange   => 'Doujin / Fanmade'
-                ,  '#00BFFF'=> 'Works'
-                ,  silver   => 'Game Animation & Film'
-                ,  violet   => 'Demo Scene'
-                ,  tomato   => 'Bootleg'
-                ,  white    => 'Other'
-                ,  seagreen => 'Cancelled Release'
+    my %types = ( 'album-game'    => 'Official Release'
+                , 'album-bonus'   => 'Enclosure / Promo'
+                , 'album-doujin'  => 'Doujin / Fanmade'
+                , 'album-works'   => 'Works'
+                , 'album-anime'   => 'Video / Animation & Film'
+                , 'album-demo'    => 'Demo Scene'
+                , 'album-bootleg' => 'Bootleg'
+                , 'album-drama'   => 'Drama'
+                , 'album-print'   => 'Other'
+                , 'album-cancel'  => 'Cancelled Release'
                 );
 
-    while ($page =~ /<tr>.*?<span class=.catalog.>(.*?)<.span>.*?<a href=....album.(\d+).><span style=.color: ([#\w]+).><span class=.albumtitle. lang=.en. style=.display:inline.>(.*?)<.span>.*?(\d{4})</sg ) {
-        dprint sprintf ("%-13.13s %5.5s %4.4s %-21.21s %s \n", $1, $2, $5, $types{$3}, $4);
-        $results{$2} = {title =>$4, type =>$3};
+    while ($page =~ /<span class="catalog ([^"]+)">(.+?)<\/span>.+?album\/(\d+)" title="(.+?)".+?(\d+)<\/a><\/td><\/tr>/sg ) {
+        dprint sprintf ("%-13.13s %5.5s %4.4s %-21.21s %s \n", $2, $3, $5, $types{$1}, $4);
+        $results{$3} = {title =>$4, type =>$1};
     }
     dprint GREEN "=" x (80)."\n";
     return \%results;
@@ -203,8 +204,9 @@ sub vgmdbid($) {
         my $asd = $1;
         $asd =~ s/<script.*?\/script>//g;   # Noscript
         $asd =~ s/<[^>]*>//g;   # Fuera tags html.
-        $asd =~ s/[\n\r]//g;    # Oneline pls
-        if (my @matches = $asd =~ /(Catalog Number)(.*?)(?:|(Other Printings)(.*?))(Release Date)(.*?)(Release Type)(.*?)(Release Price)(.*?)(Media Format)(.*?)(Classification)(.*?)(Published by)(.*?)(Composed by)(.*?)(Arranged by)(.*?)(Performed by)(.*?)$/smg) {
+       $asd =~ s/[\n\r]//g;    # Oneline pls
+        print $asd;
+        if (my @matches = $asd =~ /(Catalog Number)(.*?)(?:|(Other Printings)(.*?))(Release Date)(.*?)(Publish Format)(.*?)(Release Price)(.*?)(Media Format)(.*?)(Classification)(.*?)(Published by)(.*?)(Composed by)(.*?)(Arranged by)(.*?)(Performed by)(.*?)$/smg) {
             while (@matches) {
                 if ($matches[0] and $matches[1]) {
                     dprint BLUE BOLD "$matches[0]:\t";
