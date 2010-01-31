@@ -366,7 +366,7 @@ sub rename($) {
             $genre =~ s/,\s/;/g;
             my $date   = $vgm{'Release Date'}   || 'XXXX';
             #$date = $& if $date =~ /\d+$/; # Only year MAN
-            my $version = "Type:$vgm{'Release Type'}, Media:$vgm{'Media Format'}, Price:$vgm{'Release Price'}";
+            my $version = "Type:$vgm{'Publish Format'}, Media:$vgm{'Media Format'}, Price:$vgm{'Release Price'}";
             my $description = "Catalog:$vgm{'Catalog Number'} URL:$vgm{URL}";
             my $aartist = $vgm{'Arranged by'};
             $aartist = $vgm{'Composed by'} unless $aartist;
