@@ -20,7 +20,7 @@ if v:version >= 700
 "    set cursorcolumn            " Resalta la columna del cursor
     set list listchars=tab:»-,eol:¶,trail:·,nbsp:¬  " Muestra chars 'no deseados'
 endif
-set mouse=nicr                  " selecciones no incluyen el nº de lineas.
+set mouse=a                     " selecciones no incluyen el nº de lineas.
 set tabstop=4                   " Tabs de 4 espacios
 set expandtab                   " Inserta espacios en vez de tabs
 set shiftwidth=4                " Allows the use of < and > for VISUAL indenting
