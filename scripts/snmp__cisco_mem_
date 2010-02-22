@@ -1,0 +1,62 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use SNMP;
+
+my %params = (
+    host        => $ENV{'host'}       || 'localhost',
+    port        => $ENV{'port'}       || 161,
+    community   => $ENV{'community'}  || 'uocpublic',
+    group       => $ENV{'group'}      || 'Network',
+    version     => '2',
+    memused     => '.1.3.6.1.4.1.9.9.48.1.1.1.5.1',
+    memfree     => '.1.3.6.1.4.1.9.9.48.1.1.1.6.1',
+);
+
+if ($0 =~ /^(?:|.*\/)snmp_([^_]+)_([^_]+)_mem$/) {
+    $params{'group'} = $1 || 'Network';
+    $params{'host'}  = $2;
+    $params{'oid'}   = $3;
+} else {
+    die "regex phail!\n"
+}
+
+my $session = new SNMP::Session(
+    DestHost        => $params{'host'},
+    Community       => $params{'community'},
+    Version         => $params{'version'},
+    Port            => $params{'port'},
+);
+
+if ($ARGV[0] and lc($ARGV[0]) eq "config") {
+    print "host_name $params{'group'}\n";
+    print "graph_title Memory pool usage from $params{'host'}\n";
+    print "graph_order used free\n";
+    print "graph_vlabel bytes\n";
+    print "graph_info This graph shows the device memory usage.\n";
+    print "graph_category $params{'host'}\n";
+    print "used.label used\n";
+    print "used.draw AREA\n";
+    print "used.info Used memory\n";
+    print "free.label free\n";
+    print "free.draw STACK\n";
+    print "free.info Free memory\n";
+    exit 0;
+}
+
+my $response = $session->get($params{'memused'});
+
+if (defined ($response)) {
+    print "used.value $response\n";
+} else {
+    print "used.value U\n";
+}
+
+$response = $session->get($params{'memfree'});
+
+if (defined ($response)) {
+    print "free.value $response\n";
+} else {
+    print "free.value U\n";
+}

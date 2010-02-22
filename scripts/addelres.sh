@@ -1,4 +1,5 @@
 #/bin/bash
+# Crea/elimina un recurso de cluster xen.
 CFGFILE=$(readlink -f $1)
 test -f $CFGFILE || { echo "+ $CFGFILE no existe"; exit 1; }
 echo "+ Fichero de configuración: $CFGFILE"

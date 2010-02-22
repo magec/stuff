@@ -50,7 +50,7 @@ if( $isDE == 0 ) {
             }
          }
          if( /gtk-icon-theme-name.*=.*"(.+)"/ ) {
-            $icon = "$c1 Icons:$c3 $1";
+            $icon = "$c1 Icons: $c3 $1";
             if ( $display =~ m/Icon/ ) {
                 push(@line, "$icon");
             }
@@ -67,13 +67,11 @@ if( $isDE == 0 ) {
 
    ## Processes First
    parsePS(1);
-   
    ## Couldn't find a WM in PS
    $WM =~ /Unknown/ && print "No WM found, yours isn't on the list?...\n" unless $quite == 1;
 } else {
    grabDEinfo($DE);
-}       
-
+}
 
 print "
 $c1              __
@@ -108,7 +106,7 @@ sub parsePS {
             while( $y < @psl ) {
                print "Testing '$psl[$y]' with '$wm[$x]'\n" unless $quite == 1;
                if( $psl[$y] =~ /$wm[$x]/ ) {
-                  $WM = $wm[$x];
+                  $WM = "    $wm[$x]";
                   if ( $display =~ m/WM/ ) {
                   push(@line, "$c1 WM:$c3 $WM");
                   }
