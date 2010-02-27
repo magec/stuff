@@ -178,7 +178,7 @@ sub vgmdbsearch($) {
                 , 'album-cancel'  => 'Cancelled Release'
                 );
 
-    while ($page =~ /<span class="catalog ([^"]+)">(.+?)<\/span>.+?album\/(\d+)" title="(.+?)".+?(\d+)<\/a><\/td><\/tr>/sg ) {
+    while ($page =~ /<span class="catalog ([^"]+)">(.+?)<\/span>.+?\/album\/(\d+)" title=.(.+?).>.+?(\d+)(?:|<\/a>)<\/td><\/tr>/sg ) {
         dprint sprintf ("%-13.13s %5.5s %4.4s %-21.21s %s \n", $2, $3, $5, $types{$1}, $4);
         $results{$3} = {title =>$4, type =>$1};
     }
