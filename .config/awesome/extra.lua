@@ -5,9 +5,10 @@
 --------------------------------------------------------------------------------
 imgpath = awful.util.getdir("config")..'/imgs/'
 confdir = awful.util.getdir("config")..'/'
-setrndwall = "awsetbg -t -r "..awful.util.getdir("config").."/walls"
+setrndwall = "awsetbg -r "..awful.util.getdir("config").."/walls"
+setrndtile = "awsetbg -t -r "..awful.util.getdir("config").."/tiles"
 setwall = "awsetbg -c "..awful.util.getdir("config").."/walls/vladstudio_microbes_1920x1200.jpg"
-browser = os.getenv('BROWSER') or 'opera'
+browser = os.getenv('BROWSER') or 'chromium'
 --}}}
 --{{{    Utilidades/Funciones
 function escape(text)
@@ -895,6 +896,7 @@ globalkeys = awful.util.table.join(globalkeys,
     awful.key({ modkey,           }, "Print",      function () toggle('scrot -e gqview') end), -- tecla Print Screen
     awful.key({ modkey,           }, "BackSpace",  function () awful.util.spawn('urxvt -pe tabbed') end),
     awful.key({ modkey, "Control" }, "w",          function () awful.util.spawn(setrndwall) end),
+    awful.key({ modkey, "Control" }, "e",          function () awful.util.spawn(setrndtile) end),
     awful.key({ modkey, "Control" }, "q",          function () awful.util.spawn(setwall) end),
     awful.key({ modkey, "Control" }, "t",          function () awful.util.spawn('thunar') end),
     awful.key({ modkey, "Control" }, "p",          function () awful.util.spawn('pidgin') end),
