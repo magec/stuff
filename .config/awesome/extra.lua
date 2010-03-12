@@ -654,7 +654,7 @@ function net_info()
     local iface,cur_rx,cur_tx,rx,rxu,tx,txu
     local file = fread("/proc/net/route")
     if file then
-        iface = file:match('(%w+)%s+00000000%s+%w+%s+0003%s+')
+        iface = file:match('(%S+)%s+00000000%s+%w+%s+0003%s+')
         if not iface or iface == '' then
             return '' --fgc('No Def GW', 'red')
         end
@@ -891,7 +891,6 @@ end
 --  Actualizo la tabla globalkeys añadiendo mis keybindings.
 --  Los keycodes se pueden ver con el comando 'xev'
 globalkeys = awful.util.table.join(globalkeys,
-    awful.key({ modkey            }, "F1",         function () mypromptbox[mouse.screen]:run() end),
     awful.key({ modkey,           }, "masculine",  function () toggle(terminal) end), -- tecla º
     awful.key({ modkey,           }, "Print",      function () toggle('scrot -e gqview') end), -- tecla Print Screen
     awful.key({ modkey,           }, "BackSpace",  function () awful.util.spawn('urxvt -pe tabbed') end),
