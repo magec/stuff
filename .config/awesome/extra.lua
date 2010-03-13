@@ -12,7 +12,9 @@ browser = os.getenv('BROWSER') or 'chromium'
 --}}}
 --{{{    Utilidades/Funciones
 function escape(text)
-    return awful.util.escape(text or 'UNKNOWN')
+    if text then
+        return awful.util.escape(text or 'UNKNOWN')
+    end
 end
 -- Bold
 function bold(text)
@@ -200,29 +202,31 @@ function getMail()
         os.execute('wget '..mailurl..' -qO '..confdir..mailadd..' --http-user='..mailadd..' --http-passwd="'..mailpass..'"&')
     end
 end
---  imagebox
-mail_ico = widget({ type = "imagebox" })
-createIco(mail_ico, 'mail.png', browser..' '..mailurl..'"&')
---  textbox
-mailwidget = widget({ type  = "textbox"
-                    , name  = "mailwidget"
-                    })
--- llamada inicial a la función
-mailwidget.text=check_gmail()
---  mouse_enter
-mailwidget:add_signal("mouse::enter", function()
-    count = 0
-    check_gmail()
-end)
---  mouse_leave
-mailwidget:add_signal("mouse::leave", function() desnaug() end)
---  buttons
-mailwidget:buttons(awful.util.table.join(
-    awful.button({ }, 1, function ()
-        getMail()
-        os.execute(browser..' "'..mailurl..'"&')
+if mailpass then
+    --  imagebox
+    mail_ico = widget({ type = "imagebox" })
+    createIco(mail_ico, 'mail.png', browser..' '..mailurl..'"&')
+    --  textbox
+    mailwidget = widget({ type  = "textbox"
+                        , name  = "mailwidget"
+                        })
+    -- llamada inicial a la función
+    mailwidget.text=check_gmail()
+    --  mouse_enter
+    mailwidget:add_signal("mouse::enter", function()
+        count = 0
+        check_gmail()
     end)
-))
+    --  mouse_leave
+    mailwidget:add_signal("mouse::leave", function() desnaug() end)
+    --  buttons
+    mailwidget:buttons(awful.util.table.join(
+        awful.button({ }, 1, function ()
+            getMail()
+            os.execute(browser..' "'..mailurl..'"&')
+        end)
+    ))
+end
 --}}}
 --{{{    Bateria (texto)
 --------------------------------------------------------------------------------
@@ -822,13 +826,13 @@ timer5:start()
 timer30 = timer { timeout = 30 }
 timer30:add_signal("timeout", function()
     if batterywidget then batterywidget.text = bat_info() end
-    mailwidget.text = check_gmail()
+    if mailpass then mailwidget.text = check_gmail() end
 end)
 timer30:start()
 -- Hook called every minute
 timer60 = timer { timeout = 60 }
 timer60:add_signal("timeout", function()
-    getMail()
+    if mailpass then getMail() end
     fswidget.text = fs_info()
 end)
 timer60:start()
