@@ -687,7 +687,7 @@ function net_info()
 end
 --  imagebox
 net_ico = widget({ type = "imagebox" })
-createIco(net_ico,'net-wired.png', terminal..' -e netstat -ltunpp')
+createIco(net_ico,'net-wired.png', terminal..' -e screen -S awesome watch -n5 "lsof -ni"')
 --  textbox
 netwidget = widget({ type = 'textbox'
                    , name = 'netwidget'
