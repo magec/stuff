@@ -55,6 +55,7 @@ set t_Co=256                                    " porsia
 if has('gui_running')
 "    set cursorline
     colorscheme zenburn                         " Tema para gVim
+    set gfn=Terminus\ 12                        " Fuente
     let &guicursor = &guicursor . ",a:blinkon0" " Disable cursor blinking
 "    set guioptions-=m                           " Fuera Menu
     set guioptions-=T                           " Fuera Barra de herramientas
