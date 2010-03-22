@@ -7,6 +7,7 @@ alias wget='wget -U "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.10) Gecko/
 alias walk='snmpwalk -c uocpublic -v 1'
 alias rdesktop='rdesktop -0 -z -g95% -uAdministrador -kes -a16'
 alias pwgen='perl -le "print map { (a..z,A..Z,0..9)[rand 62] } 1..pop"'
+alias dicks='perl -le "for (1..pop){print \"8\".\"=\"x((rand 10)+1).\"D\"}"'
 export PATH=$PATH:$HOME/stuff/scripts:$HOME/scripts
 export EDITOR=vim
 export BROWSER=chromium
