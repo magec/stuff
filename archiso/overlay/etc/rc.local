@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# /etc/rc.local: Local multi-user startup script.
+#
+# tuned xorg.conf for nvidia/intel
+VGA=$(lspci| sed -n 's/.*VGA compatible controller: \([a-zA-Z]\+\).*/\1/p')
+[ "$VGA" = "Intel" ] && cp /etc/X11/xorg.conf.intel /etc/X11/xorg.conf
+[ "$VGA" = "nVidia" ] && cp /etc/X11/xorg.conf.nvidia /etc/X11/xorg.conf
+# chromium workaround
+rm -rf /usr/lib/chromium/chromium-sandbox
+# awesome df workaround
+df > /dev/null&

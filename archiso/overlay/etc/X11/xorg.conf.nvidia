@@ -1,0 +1,14 @@
+Section "Extensions"
+    Option      "Composite" "Disable"
+EndSection
+Section "Device"
+    Identifier  "nv"
+    Driver      "nv"
+    Option      "RandRRotation"             "True"
+    Option      "RenderAccel"               "True"
+    Option      "TripleBuffer"              "True"
+    Option      "BackingStore"              "True
+    Option      "DamageEvents"              "True"
+    Option      "AddARGBGLXVisuals"         "True"
+    Option      "Coolbits"                  "True"
+EndSection

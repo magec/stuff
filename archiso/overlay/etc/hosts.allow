@@ -1,0 +1,9 @@
+#
+# /etc/hosts.allow
+#
+
+sshd: ALL
+tftpd: ALL
+in.tftpd: ALL
+
+# End of file

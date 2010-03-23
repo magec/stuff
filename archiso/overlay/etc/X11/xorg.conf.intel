@@ -1,0 +1,13 @@
+Section "Extensions"
+    Option      "Composite"             "Disable"
+EndSection
+Section "Device"
+    Identifier  "Device0"
+    Driver      "intel"
+    Option      "DRI"                   "true"
+    Option      "NoDDC"                 "true"
+    Option      "EnablePageFlip"        "true"
+    Option      "RenderAccel"           "true"
+    Option      "Tiling"                "false"
+    Option      "DontZap"               "false"
+EndSection

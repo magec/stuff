@@ -1,0 +1,21 @@
+name = EDUROAM
+author = UOC
+version = 1
+require identity *Identity password *Password
+-----
+ctrl_interface=/var/run/wpa_supplicant
+eapol_version=1
+ap_scan=1
+fast_reauth=1
+network={
+    ssid="eduroam"
+    key_mgmt=WPA-EAP
+    proto=WPA
+    pairwise=TKIP
+    group=TKIP
+    eap=TTLS
+    identity="$_IDENTITY"
+    password="$_PASSWORD"
+    phase2="auth=PAP"
+    ca_cert="/etc/ssl/certs/Verisign_Class_3_Public_Primary_Certification_Authority.pem"
+}
