@@ -8,6 +8,7 @@ alias walk='snmpwalk -c uocpublic -v 1'
 alias rdesktop='rdesktop -0 -z -g95% -uAdministrador -kes -a16'
 alias pwgen='perl -le "print map { (a..z,A..Z,0..9)[rand 62] } 1..pop"'
 alias dicks='perl -le "for (1..pop){print \"8\".\"=\"x((rand 10)+1).\"D\"}"'
+alias rsync_size='rsync -aivh --size-only --progress'
 export PATH=$PATH:$HOME/stuff/scripts:$HOME/scripts
 export EDITOR=vim
 export BROWSER=chromium

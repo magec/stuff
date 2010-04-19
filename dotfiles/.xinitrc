@@ -8,12 +8,11 @@ then
     break
 fi
 # I merge
-xrdb -merge -load ~/.Xdefaults &
+xrdb -merge -load ~/.Xdefaults
 # nasTests
-test -f `which xcompmgr`    && xcompmgr        &
-test -f `which urxvtd`      && urxvtd -o -q -f &
-test -f `which parcellite`  && parcellite      &
-test -f `which wicd-client` && wicd-client     &
-test -f `which thunar`      && thunar --daemon &
-# o-som
+test -f `which xcompmgr`    && xcompmgr &
+test -f `which urxvtd`      && urxvtd -o -q -f
+test -f `which parcellite`  && parcellite &
+test -f `which wicd-client` && wicd-client
+test -f `which wmname`      && wmname LG3D # Java Apps Workaround
 exec ck-launch-session awesome > ~/.awesome.err 2>&1
