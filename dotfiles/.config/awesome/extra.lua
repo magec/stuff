@@ -85,6 +85,12 @@ function bytestoh(bytes)
     end
     return v or bytes,u or "B"
 end
+-- Debug Variables
+function dbg(vars)
+    local text = ""
+    for i=1, #vars do text = text .. vars[i] .. " | " end
+    naughty.notify({ text = text, timeout = 0 })
+end
 -- Crea, muestra y esconde clientes flotantes
 -- http://awesome.naquadah.org/wiki/Drop-down_terminal
 local capi = {
