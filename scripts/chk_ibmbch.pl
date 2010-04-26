@@ -24,7 +24,7 @@ my %hash = ( 0  => [1, 'unknown']
            );
 
 my $session = new SNMP::Session( DestHost  => $ARGV[0]
-                               , Community => 'uocpublic'
+                               , Community => 'public'
                                , Port      => 161
                                , Version   => 1
                                );

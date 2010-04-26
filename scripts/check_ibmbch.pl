@@ -40,10 +40,10 @@ my $session = new SNMP::Session( DestHost  => $ARGV[0]
                                );
 
 if ($ARGV[1] > 0) {
-    $bld_health = $session->get(".1.3.6.1.4.1.2.3.51.2.2.8.2.1.1.5.$ARGV[1]") || undef;       #BLADE-MIB::ledBladeHealthState
-    $bld_id = $session->get(".1.3.6.1.4.1.2.3.51.2.2.8.2.1.1.6.$ARGV[1]")     || "(No Name)"; #BLADE-MIB::ledBladeId
+    $bld_health = $session->get(".1.3.6.1.4.1.2.3.51.2.2.8.2.1.1.5.$ARGV[1]");            #BLADE-MIB::ledBladeHealthState
+    $bld_id = $session->get(".1.3.6.1.4.1.2.3.51.2.2.8.2.1.1.6.$ARGV[1]") || "(No Name)"; #BLADE-MIB::ledBladeId
 } else {
-    $sys_health = $session->get(".1.3.6.1.4.1.2.3.51.2.2.7.1.0")              || undef;       #BLADE-MIB::systemHealthStat
+    $sys_health = $session->get(".1.3.6.1.4.1.2.3.51.2.2.7.1.0");                         #BLADE-MIB::systemHealthStat
 }
 
 if (defined $bld_health and $#{$hash{$bld_health}} == 1) {
