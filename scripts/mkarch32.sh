@@ -11,6 +11,7 @@ exec 3<<__EOF__
 [options]
 HoldPkg     = pacman glibc
 SyncFirst   = pacman
+XferCommand = /usr/bin/wget -c -t 3 --waitretry=3 -O %o %u
 [core]
 Server = http://sunsite.rediris.es/mirror/archlinux/core/os/i686
 [extra]
