@@ -11,8 +11,8 @@ iptables -P OUTPUT ACCEPT  # We know what we do.
 # We Rule:
 iptables -A INPUT -i lo -j ACCEPT # Allow loopback.
 iptables -A INPUT ! -i lo -m state --state ESTABLISHED,RELATED -j ACCEPT # Stateful rule.
-iptables -A INPUT ! -i lo -p tcp --syn -m state --state NEW -m multiport --dports 22,6600 -j ACCEPT # N    ew TCP traffic we'll allow.
-iptables -A INPUT -j LOG -m limit --limit 3/s --limit-burst 8 --log-prefix "DROP " # Log the rest..
+iptables -A INPUT ! -i lo -p tcp --syn -m state --state NEW -m multiport --dports 22,6600 -j ACCEPT # New TCP traffic we'll allow.
+iptables -A INPUT -j LOG -m limit --limit 3/s --limit-burst 8 --log-prefix "DROP " # Log the rest.
 # Make the rules static:
 /etc/rc.d/iptables save     # Save rules.
 /etc/rc.d/iptables restart  # Restart FW.
