@@ -1,18 +1,21 @@
 #!/bin/bash
 #set -x
-NETS=`wget -q --user=X --password=X -O - http://gestioip.uoc.es/index.cgi | sed -e 's/<[^>]*>/ /g' | egrep -o '([0-9]{1,3}\.){3}[0-9]{1,3}.*'`
+USER="XXXXXXX"
+PASS="XXXXXXX"
+verd() { echo -ne "\e[1;32m$1\e[m"; }
+rojo() { echo -ne "\e[1;31m$1\e[m"; }
 
-until [ -z "$1" ]
-do
-echo -e "\e[1;32m#\n#\t${1}\n#\e[0m"
-    RES=`wget -q --user=X --password=X --post-data "hostname=${1}&search_index=true" -O - http://gestioip.uoc.es/ip_search.cgi | sed -e 's/<[^>]*>/ /g' | egrep -i --color ${1} | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}.*'`
+until [ -z "$1" ] ; do
+    verd "#\n#\t${1}\n#\n\n"
+    RES=$(wget -q --user=$USER --password=$PASS --post-data "search_index=true&hostname=${1}" -O - http://gestioip.uoc.es/ip_searchip.cgi | sed -e 's/<[^>]*>/ /g' | sort -V | sed -n 's/^ \+\([0-9\.]\+\) \(.\+\) .*$/\1\t->\2/p')
     if [ -z "$RES" ] ; then
-        echo -e "\e[1;31m# No hay hosts.\e[0m"
+        rojo "# No hay hosts.\n"
     else
-        echo -e "\e[1;32m# Hosts:\e[0m"
+        verd "# Hosts:\n"
         echo "$RES" | egrep -i --color ${1}
-            echo -e "\e[1;32m# Redes:\e[0m"
-            echo "$NETS" | egrep --color `echo "$RES" | egrep -o '([0-9]{1,3}\.){3}' | xargs | sed -e 's/ /|/g' -e 's/\./\\./g'`
+        verd "# Redes:\n"
+        NETS=$(wget -q --user=$USER --password=$PASS -O - http://gestioip.uoc.es/index.cgi | sed -e 's/<[^>]*>/ /g' | sed -n 's/ \+\([0-9\.]\+\) \+\([0-9]\+\) \+\(.*\)$/\1\t(\2) -> \3/p')
+        echo "$NETS" | sort -V | egrep --color $(echo "$RES" | egrep -o '([0-9]{1,3}\.){3}' | xargs | sed -e 's/ /|/g' -e 's/\./\\./g')
     fi
-        shift
+    shift
 done
