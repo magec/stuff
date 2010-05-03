@@ -1,75 +1,86 @@
-#### Change these settings to modify how this ISO is built.
-#  The directory that you'll be using for the actual build process.
+ver=$(shell date +%Y.%m.%d)
+
 WORKDIR=work
-#  A list of packages to install, either space separated in a string or line separated in a file. Can include groups.
-PACKAGES="$(shell cat packages.list) syslinux"
-# The name of our ISO. Does not specify the architecture!
-NAME=myarch
-# Version will be appended to the ISO.
-VER=1.00
-# Kernel version. You'll need this.
-KVER=2.6.32-ARCH
-# Architecture will also be appended to the ISO name.
+
 ARCH?=$(shell uname -m)
-# Current working directory
-PWD:=$(shell pwd)
-# This is going to be the full name the final iso/img will carry
-FULLNAME="$(PWD)"/$(NAME)-$(VER)-$(ARCH)
 
-# Default make instruction to build everything.
-all: myarch
+PWD=$(shell pwd)
+NETname=$(PWD)/archlinux-$(ver)-netinstall-$(ARCH).iso
+COREname=$(PWD)/archlinux-$(ver)-core-$(ARCH).iso
 
-# The following will first run the base-fs routine before creating the final iso image.
-myarch: base-fs
-	mkarchiso -vp syslinux iso "$(WORKDIR)" "$(FULLNAME)".iso
+PACKAGES="$(shell cat packages.$(ARCH))"
 
-# This is the main rule for make the working filesystem. It will run routines from left to right. 
-# Thus, root-image is called first and syslinux is called last.
-base-fs: root-image boot-files initcpio overlay iso-mounts syslinux
+kver_FILE=$(WORKDIR)/root-image/etc/mkinitcpio.d/kernel26.kver
 
-# The root-image routine is always executed first. 
-# It only downloads and installs all packages into the $WORKDIR, giving you a basic system to use as a base.
-root-image: "$(WORKDIR)"/root-image/.arch-chroot
-"$(WORKDIR)"/root-image/.arch-chroot:
-root-image:
-	mkarchiso -vp $(PACKAGES) create "$(WORKDIR)"
+all: net-iso core-iso
+
+# Rules for each type of image
+core-iso: $(COREname)
+net-iso: $(NETname)
+
+$(COREname): core-pkgs base-fs
+	mkarchiso -v iso $(WORKDIR) $@
+$(NETname): base-fs
+	mkarchiso -v iso $(WORKDIR) $@
+
+# This is the main rule for make the working filesystem.
+base-fs: root-image bootfiles initcpio overlay iso-mounts
+
+
+# Rules for make the root-image for base filesystem.
+root-image: $(WORKDIR)/root-image/.arch-chroot
+$(WORKDIR)/root-image/.arch-chroot:
+	mkarchiso -v -p $(PACKAGES) create $(WORKDIR)
 
 # Rule for make /boot
-boot-files: root-image
-	cp -r "$(WORKDIR)"/root-image/boot "$(WORKDIR)"/iso/
-	cp -r boot-files/* "$(WORKDIR)"/iso/boot/
-
-# Rules for initcpio images
-initcpio: "$(WORKDIR)"/iso/boot/myarch.img
-"$(WORKDIR)"/iso/boot/myarch.img: mkinitcpio.conf "$(WORKDIR)"/root-image/.arch-chroot
-	mkdir -p "$(WORKDIR)"/iso/boot
-	mkinitcpio -c ./mkinitcpio.conf -b "$(WORKDIR)"/root-image -k $(KVER) -g $@
-
-# See: Overlay
-overlay:
-	mkdir -p "$(WORKDIR)"/overlay/etc/pacman.d
-	cp -r overlay "$(WORKDIR)"/
-	wget -O "$(WORKDIR)"/overlay/etc/pacman.d/mirrorlist http://www.archlinux.org/mirrorlist/$(ARCH)/all/
-	sed -i "s/#Server/Server/g" "$(WORKDIR)"/overlay/etc/pacman.d/mirrorlist
-
-# Rule to process isomounts file.
-iso-mounts: "$(WORKDIR)"/isomounts
-"$(WORKDIR)"/isomounts: isomounts root-image
-	sed "s|@ARCH@|$(ARCH)|g" isomounts > $@
-
-# This routine is always executed just before generating the actual image. 
-syslinux: root-image
-	mkdir -p $(WORKDIR)/iso/boot/isolinux
+bootfiles: root-image
+	mkdir -p $(WORKDIR)/iso/boot
+	cp $(WORKDIR)/root-image/boot/System.map26 $(WORKDIR)/iso/boot/
+	cp $(WORKDIR)/root-image/boot/vmlinuz26 $(WORKDIR)/iso/boot/
+	cp $(WORKDIR)/root-image/boot/memtest86+/memtest.bin $(WORKDIR)/iso/boot/memtest
+	cp $(WORKDIR)/root-image/usr/share/licenses/common/GPL2/license.txt $(WORKDIR)/iso/boot/memtest.COPYING
+	cp -r boot-files/* $(WORKDIR)/iso/boot/
 	cp $(WORKDIR)/root-image/usr/lib/syslinux/*.c32 $(WORKDIR)/iso/boot/isolinux/
 	cp $(WORKDIR)/root-image/usr/lib/syslinux/isolinux.bin $(WORKDIR)/iso/boot/isolinux/
+	cp $(WORKDIR)/root-image/usr/lib/syslinux/memdisk $(WORKDIR)/iso/boot/isolinux/
+	cp $(WORKDIR)/root-image/usr/lib/syslinux/pxelinux.0 $(WORKDIR)/iso/boot/isolinux/
 
-# In case "make clean" is called, the following routine gets rid of all files created by this Makefile.
+
+# Rules for initcpio images
+initcpio: $(WORKDIR)/iso/boot/archiso.img
+$(WORKDIR)/iso/boot/archiso.img: mkinitcpio.conf $(WORKDIR)/root-image/.arch-chroot
+	mkdir -p $(WORKDIR)/iso/boot
+	mkinitcpio -c ./mkinitcpio.conf -b $(WORKDIR)/root-image -k $(shell grep ^ALL_kver $(kver_FILE) | cut -d= -f2) -g $@
+
+
+# overlay filesystem
+overlay:
+	mkdir -p $(WORKDIR)/overlay/etc/pacman.d
+	cp -r overlay $(WORKDIR)/
+	wget -O $(WORKDIR)/overlay/etc/pacman.d/mirrorlist http://www.archlinux.org/mirrorlist/$(ARCH)/all/
+	sed -i "s/#Server/Server/g" $(WORKDIR)/overlay/etc/pacman.d/mirrorlist
+
+
+# Rule to process isomounts file.
+iso-mounts: $(WORKDIR)/isomounts
+$(WORKDIR)/isomounts: isomounts root-image
+	sed "s|@ARCH@|$(ARCH)|g" isomounts > $@
+
+
+# Rule for make the [core] repo packages
+core-pkgs:
+	./download-repo.sh core $(WORKDIR)/core-pkgs
+
+
+# Clean-up all work
 clean:
-	rm -rf "$(WORKDIR)" "$(FULLNAME)".img "$(FULLNAME)".iso
-	tar cjvf overlay/root/myarch.bz2 boot-files isomounts Makefile mkinitcpio.conf overlay packages.list
+	rm -rf $(WORKDIR) $(NETname) $(COREname)
+	tar cjvf myarch.bz2 boot-files download-repo.sh instructions isomounts Makefile mkinitcpio.conf overlay packages.i686 packages.x86_64
+	mv myarch.bz2 overlay/root/myarch.bz2
 
-.PHONY: all myarch
+.PHONY: all core-iso net-iso
 .PHONY: base-fs
-.PHONY: root-image boot-files initcpio overlay iso-mounts
-.PHONY: syslinux
+.PHONY: root-image bootfiles initcpio overlay iso-mounts
+.PHONY: core-pkgs
 .PHONY: clean
+
